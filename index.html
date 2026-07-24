@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="口袋景點">
+<title>口袋景點</title>
+<style>
+:root{
+  --bg:#f4f6fa; --card:#ffffff; --text:#1a2233; --text2:#5b667a; --muted:#93a0b4;
+  --border:#e3e8f0; --accent:#2563eb; --accent-bg:#e8f0fe; --accent-dark:#1d4ed8;
+  --warn:#b45309; --warn-bg:#fef3c7; --warn-border:#fcd34d;
+  --ok:#15803d; --ok-bg:#dcfce7; --danger:#b91c1c;
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f1420; --card:#1a2130; --text:#e8edf5; --text2:#a8b3c5; --muted:#6b7789;
+    --border:#2a3345; --accent:#5b8def; --accent-bg:#1d2b47; --accent-dark:#7da6f5;
+    --warn:#fbbf24; --warn-bg:#3a2e12; --warn-border:#6b5416;
+    --ok:#4ade80; --ok-bg:#14351f; --danger:#f87171;
+  }
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; padding:0;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  background:var(--bg); color:var(--text); font-size:16px; line-height:1.55;
+  padding-bottom:calc(70px + env(safe-area-inset-bottom));
+}
+header{
+  position:sticky; top:0; z-index:10; background:var(--bg);
+  padding:14px 16px 10px; display:flex; align-items:center; gap:8px;
+  border-bottom:1px solid var(--border);
+}
+header .logo{font-size:20px;}
+header h1{font-size:18px; font-weight:700; margin:0; flex:1;}
+header .count{font-size:13px; color:var(--muted);}
+main{max-width:520px; margin:0 auto; padding:14px 14px 20px;}
+.page{display:none;}
+.page.active{display:block;}
+.card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:12px;}
+.section-label{font-size:13px; color:var(--text2); margin:14px 0 8px; font-weight:600;}
+input[type=text], select{
+  width:100%; font-size:16px; padding:11px 12px; border:1px solid var(--border);
+  border-radius:10px; background:var(--card); color:var(--text); outline:none;
+  appearance:none; -webkit-appearance:none;
+}
+input[type=text]:focus, select:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg);}
+input::placeholder{color:var(--muted);}
+.row{display:flex; gap:8px;}
+.row > *{flex:1; min-width:0;}
+button{
+  font-family:inherit; font-size:15px; padding:11px 12px; border-radius:10px;
+  border:1px solid var(--border); background:var(--card); color:var(--text);
+  cursor:pointer; min-height:44px;
+}
+button:active{transform:scale(.98);}
+.btn-primary{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; width:100%;}
+.btn-primary:disabled{opacity:.5;}
+.btn-sm{font-size:13px; padding:8px 10px; min-height:40px;}
+.btn-icon{border:none; background:none; padding:6px; min-height:0; color:var(--muted); font-size:15px;}
+.chips{display:flex; gap:7px; flex-wrap:wrap; margin:10px 0;}
+.chip{
+  font-size:13.5px; padding:7px 13px; border-radius:999px; border:1px solid var(--border);
+  background:var(--card); color:var(--text2); min-height:0;
+}
+.chip.on{background:var(--accent-bg); border-color:var(--accent); color:var(--accent); font-weight:600;}
+.place{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 13px; margin-bottom:9px;}
+.place .top{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.place .name{font-size:15.5px; font-weight:600;}
+.badge{font-size:12px; padding:2px 9px; border-radius:999px; background:var(--accent-bg); color:var(--accent); white-space:nowrap;}
+.badge.warn{background:var(--warn-bg); color:var(--warn);}
+.place .list-tag{font-size:12px; color:var(--muted); margin-left:auto; white-space:nowrap;}
+.place .note{font-size:13.5px; color:var(--text2); margin:3px 0 0;}
+.place .actions{display:flex; gap:8px; margin-top:9px;}
+.place .actions button{flex:1;}
+.place.done{background:var(--bg);}
+.place.done .name{color:var(--muted); text-decoration:line-through; font-weight:400;}
+.empty{font-size:14px; color:var(--muted); text-align:center; padding:18px 8px;}
+.search-wrap{position:relative; margin-bottom:4px;}
+.search-wrap .icon{position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:14px;}
+.search-wrap input{padding-left:36px;}
+.stop{display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:9px 12px; margin-bottom:7px;}
+.stop.tmp{border-color:var(--warn-border);}
+.stop .num{width:24px; height:24px; border-radius:50%; background:var(--accent-bg); color:var(--accent); font-size:12.5px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.stop.tmp .num{background:var(--warn-bg); color:var(--warn);}
+.stop .n{font-size:14.5px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.stop .tag{font-size:12px; color:var(--warn);}
+.pickrow{display:flex; align-items:center; gap:10px; padding:9px 2px; cursor:pointer; border-bottom:1px solid var(--border);}
+.pickrow:last-child{border-bottom:none;}
+.pickrow .box{width:22px; height:22px; border-radius:6px; border:2px solid var(--muted); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;}
+.pickrow.on .box{border-color:var(--accent); background:var(--accent-bg); color:var(--accent); border-radius:50%;}
+.pickrow .n{font-size:14.5px; flex:1;}
+.pickrow .c{font-size:12px; color:var(--muted);}
+.notice{font-size:13px; padding:10px 12px; border-radius:10px; margin:10px 0;}
+.notice.warn{background:var(--warn-bg); color:var(--warn);}
+.notice.ok{background:var(--ok-bg); color:var(--ok);}
+.notice.info{background:var(--accent-bg); color:var(--accent);}
+.leg{display:flex; align-items:center; gap:9px; width:100%; text-align:left; margin-bottom:7px; font-size:14px;}
+.leg .num{width:22px; height:22px; border-radius:50%; background:var(--accent-bg); color:var(--accent); font-size:12px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;}
+.leg.ok2 .num{background:var(--ok-bg); color:var(--ok);}
+.leg.ok2{color:var(--muted);}
+.leg .t{flex:1; overflow:hidden; text-overflow:ellipsis;}
+nav{
+  position:fixed; bottom:0; left:0; right:0; z-index:20;
+  background:var(--card); border-top:1px solid var(--border);
+  display:flex; padding-bottom:env(safe-area-inset-bottom);
+}
+nav button{
+  flex:1; border:none; border-radius:0; background:none; padding:8px 2px 9px;
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  font-size:11.5px; color:var(--muted); min-height:56px;
+}
+nav button .ic{font-size:21px; line-height:1;}
+nav button.on{color:var(--accent); font-weight:700;}
+.drop{border:2px dashed var(--border); border-radius:var(--radius); padding:20px 14px; text-align:center; background:var(--card);}
+.drop p{margin:6px 0; font-size:13.5px; color:var(--text2);}
+.imp-list{margin-top:10px;}
+.imp-row{display:flex; align-items:center; gap:8px; padding:8px 2px; border-bottom:1px solid var(--border); font-size:14px;}
+.imp-row:last-child{border-bottom:none;}
+.imp-row select{width:110px; flex:none; font-size:14px; padding:7px 8px;}
+.imp-row .n{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.hint{font-size:12.5px; color:var(--muted); margin:8px 0 0; text-align:center;}
+.spin{display:inline-block; animation:sp 1s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.toast{
+  position:fixed; left:50%; transform:translateX(-50%); bottom:calc(80px + env(safe-area-inset-bottom));
+  background:var(--text); color:var(--bg); font-size:14px; padding:10px 18px; border-radius:999px;
+  z-index:50; opacity:0; transition:opacity .25s; pointer-events:none; max-width:88%;
+}
+.toast.show{opacity:.95;}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">📍</span>
+  <h1>口袋景點</h1>
+  <span class="count" id="hdCount"></span>
+</header>
+
+<main>
+
+<!-- ============ 頁 1:口袋名單 ============ -->
+<section class="page active" id="page-list">
+  <div class="card">
+    <div class="section-label" style="margin-top:0;">新增景點</div>
+    <input type="text" id="inName" placeholder="景點名稱(必填)" style="margin-bottom:8px;">
+    <div class="row" style="margin-bottom:8px;">
+      <select id="inCat"></select>
+      <select id="inList"></select>
+    </div>
+    <input type="text" id="inNote" placeholder="備註(選填)" style="margin-bottom:10px;">
+    <button class="btn-primary" id="btnAdd">＋ 加入口袋名單</button>
+  </div>
+
+  <div class="row" style="align-items:center;">
+    <div class="search-wrap" style="flex:2;">
+      <span class="icon">🔍</span>
+      <input type="text" id="q" placeholder="搜尋名稱或備註">
+    </div>
+    <select id="fList" style="flex:1.2;"></select>
+  </div>
+  <div class="chips" id="fCats"></div>
+
+  <div class="section-label">待加入 Google 地圖<span id="pendCount" style="color:var(--muted); font-weight:400;"></span></div>
+  <div id="pendList"></div>
+
+  <div class="section-label">已加入 Google 地圖</div>
+  <div id="doneList"></div>
+</section>
+
+<!-- ============ 頁 2:路線規劃 ============ -->
+<section class="page" id="page-route">
+  <div class="section-label" style="margin-top:0;">步驟 1・從口袋名單點選(點選順序 = 停靠順序)</div>
+  <div class="card" id="routePick"></div>
+  <div class="row" style="margin-bottom:4px;">
+    <input type="text" id="tmpName" placeholder="臨時地點(台中車站、加油站)" style="flex:2.4;">
+    <button class="btn-sm" id="btnTmp" style="flex:1;">＋ 插入</button>
+  </div>
+
+  <div class="section-label">步驟 2・停靠順序(可上下移動)</div>
+  <div id="routeOrder"></div>
+
+  <div class="section-label">步驟 3・交通方式</div>
+  <div class="row">
+    <button class="chip mode on" data-m="driving">🚗 開車</button>
+    <button class="chip mode" data-m="walking">🚶 走路</button>
+    <button class="chip mode" data-m="transit">🚇 捷運</button>
+  </div>
+  <div class="notice warn" id="transitNote" style="display:none;">ⓘ 大眾運輸不支援一次多停靠點(Google 限制),已自動拆成分段導航,搭完一段按下一段。</div>
+  <div class="notice warn" id="maxNote" style="display:none;">ⓘ 停靠點超過 9 個,Google 地圖一次最多帶 9 個停靠點,超出的請分段導航或分成兩條路線。</div>
+  <div id="goArea" style="margin-top:10px;"></div>
+</section>
+
+<!-- ============ 頁 3:附近探索 ============ -->
+<section class="page" id="page-near">
+  <button class="btn-primary" id="btnLoc">📡 定位我的位置</button>
+  <p class="hint" id="locStat">按下按鈕,列出附近的景點與美食(資料來源:OpenStreetMap)</p>
+  <div class="row" id="nearCtrl" style="display:none; align-items:center; margin-top:10px;">
+    <div class="chips" id="nearCats" style="margin:0; flex:2.5;"></div>
+    <select id="nearR" style="flex:1;">
+      <option value="500">500 公尺</option>
+      <option value="1000" selected>1 公里</option>
+      <option value="3000">3 公里</option>
+    </select>
+  </div>
+  <div id="nearList" style="margin-top:10px;"></div>
+  <button class="btn-sm" id="btnGNear" style="width:100%; margin-top:6px; display:none;">🗺️ 在 Google 地圖看附近全部結果</button>
+</section>
+
+<!-- ============ 頁 4:匯入 ============ -->
+<section class="page" id="page-import">
+  <div class="drop">
+    <div style="font-size:26px;">🗂️</div>
+    <p><b>從 Google 地圖搬家</b></p>
+    <p>選擇 Google Takeout 匯出的檔案:<br>可直接選 <b>.zip</b>,或解壓後的 <b>.csv / .json</b>(可多選)</p>
+    <input type="file" id="impFile" accept=".zip,.csv,.json,.geojson" multiple style="display:none;">
+    <button class="btn-sm" id="btnPick" style="margin-top:6px;">選擇檔案</button>
+  </div>
+  <div id="impStatus"></div>
+  <div id="impPreview"></div>
+  <div class="card" style="margin-top:14px;">
+    <div class="section-label" style="margin-top:0;">怎麼從 Google 拿到檔案?</div>
+    <p style="font-size:13.5px; color:var(--text2); margin:0;">
+      1. 前往 <a href="https://takeout.google.com" target="_blank" style="color:var(--accent);">takeout.google.com</a> 並登入<br>
+      2. 按「取消全選」,只勾選「<b>已儲存</b>」(Saved)<br>
+      3. 按「下一步」→「建立匯出作業」,幾分鐘後收到下載連結<br>
+      4. 下載 zip 檔後回到這裡選擇檔案即可,已存在的相同地點會自動略過
+    </p>
+  </div>
+</section>
+
+</main>
+
+<nav>
+  <button class="on" data-p="list"><span class="ic">📋</span>口袋名單</button>
+  <button data-p="route"><span class="ic">🗺️</span>路線規劃</button>
+  <button data-p="near"><span class="ic">📡</span>附近探索</button>
+  <button data-p="import"><span class="ic">📥</span>匯入</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+"use strict";
+/* ================= 資料層 ================= */
+var LS_P="pocket_places_v1", LS_C="pocket_cats_v1", LS_L="pocket_lists_v1";
+var DEF_CATS=["美食","景點","咖啡","購物","住宿"];
+var places=[], cats=[], lists=[];
+function load(){
+  try{places=JSON.parse(localStorage.getItem(LS_P))||[];}catch(e){places=[];}
+  try{cats=JSON.parse(localStorage.getItem(LS_C))||DEF_CATS.slice();}catch(e){cats=DEF_CATS.slice();}
+  try{lists=JSON.parse(localStorage.getItem(LS_L))||["我的口袋名單"];}catch(e){lists=["我的口袋名單"];}
+  if(!cats.length)cats=DEF_CATS.slice();
+  if(!lists.length)lists=["我的口袋名單"];
+}
+function save(){
+  localStorage.setItem(LS_P,JSON.stringify(places));
+  localStorage.setItem(LS_C,JSON.stringify(cats));
+  localStorage.setItem(LS_L,JSON.stringify(lists));
+}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function esc(s){var d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML;}
+function attr(s){return esc(s).replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+function $(i){return document.getElementById(i);}
+function hasPlace(name){name=name.trim();return places.some(function(p){return p.name===name;});}
+var toastT=null;
+function toast(msg){
+  var t=$("toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove("show");},2200);
+}
+function gmapSearch(name){
+  window.open("https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(name),"_blank");
+}
+
+/* ================= 分頁切換 ================= */
+document.querySelectorAll("nav button").forEach(function(b){
+  b.addEventListener("click",function(){
+    document.querySelectorAll("nav button").forEach(function(x){x.classList.remove("on");});
+    b.classList.add("on");
+    document.querySelectorAll(".page").forEach(function(p){p.classList.remove("active");});
+    $("page-"+b.dataset.p).classList.add("active");
+    if(b.dataset.p==="route")renderRoute();
+    window.scrollTo(0,0);
+  });
+});
+
+/* ================= 下拉選單(含自訂) ================= */
+function fillSelect(sel,arr,cur,addLabel){
+  var h=arr.map(function(x){return '<option value="'+attr(x)+'"'+(x===cur?" selected":"")+'>'+esc(x)+'</option>';}).join("");
+  h+='<option value="__add__">＋ '+addLabel+'…</option>';
+  sel.innerHTML=h;
+}
+function bindAddable(sel,arr,label,after){
+  sel.addEventListener("change",function(){
+    if(sel.value!=="__add__")return;
+    var v=prompt("輸入新的"+label+"名稱:");
+    if(v){v=v.trim();}
+    if(v&&arr.indexOf(v)<0){arr.push(v);save();}
+    refreshSelects(v&&arr.indexOf(v)>=0?{sel:sel,val:v}:null);
+    if(after)after();
+  });
+}
+function refreshSelects(pick){
+  fillSelect($("inCat"),cats,pick&&pick.sel===$("inCat")?pick.val:$("inCat").value||cats[0],"新增分類");
+  fillSelect($("inList"),lists,pick&&pick.sel===$("inList")?pick.val:$("inList").value||lists[0],"新增清單");
+  var fl=$("fList"),cur=fl.value||"__all__";
+  var h='<option value="__all__">全部清單</option>';
+  lists.forEach(function(l){h+='<option value="'+attr(l)+'"'+(l===cur?" selected":"")+'>'+esc(l)+'</option>';});
+  fl.innerHTML=h;
+  if(pick&&pick.sel===$("inCat")&&$("inCat").querySelector('option[value="'+pick.val.replace(/"/g,'\\"')+'"]'))$("inCat").value=pick.val;
+  if(pick&&pick.sel===$("inList"))$("inList").value=pick.val;
+}
+
+/* ================= 頁 1:口袋名單 ================= */
+var curCat="全部", qText="";
+function pool(){
+  var l=$("fList").value||"__all__";
+  return places.filter(function(p){return l==="__all__"||p.list===l;});
+}
+function catBadge(c){
+  var warm=(c==="美食"||c==="咖啡");
+  return '<span class="badge'+(warm?" warn":"")+'">'+esc(c)+'</span>';
+}
+function renderList(){
+  var p=pool();
+  var seen=["全部"];
+  p.forEach(function(x){if(seen.indexOf(x.cat)<0)seen.push(x.cat);});
+  if(seen.indexOf(curCat)<0)curCat="全部";
+  $("fCats").innerHTML=seen.map(function(c){
+    var n=c==="全部"?p.length:p.filter(function(x){return x.cat===c;}).length;
+    return '<button class="chip'+(c===curCat?" on":"")+'" data-c="'+attr(c)+'">'+esc(c)+' '+n+'</button>';
+  }).join("");
+  $("fCats").querySelectorAll(".chip").forEach(function(b){
+    b.addEventListener("click",function(){curCat=b.dataset.c;renderList();});
+  });
+  var rows=p.filter(function(x){
+    if(curCat!=="全部"&&x.cat!==curCat)return false;
+    if(qText&&x.name.indexOf(qText)<0&&(x.note||"").indexOf(qText)<0)return false;
+    return true;
+  });
+  var pend=rows.filter(function(x){return !x.done;});
+  var done=rows.filter(function(x){return x.done;});
+  $("pendCount").textContent=pend.length?"・"+pend.length+" 個":"";
+  $("hdCount").textContent="共 "+places.length+" 個景點";
+  $("pendList").innerHTML=pend.length?pend.map(function(x){
+    return '<div class="place">'+
+    '<div class="top"><span class="name">'+esc(x.name)+'</span>'+catBadge(x.cat)+
+    '<span class="list-tag">'+esc(x.list)+'</span>'+
+    '<button class="btn-icon" data-del="'+attr(x.id)+'" aria-label="刪除">🗑️</button></div>'+
+    (x.note?'<p class="note">'+esc(x.note)+'</p>':'')+
+    '<div class="actions">'+
+    '<button class="btn-sm" data-map="'+attr(x.name)+'">🔗 Google 地圖</button>'+
+    '<button class="btn-sm" data-done="'+attr(x.id)+'">✅ 標記已加入</button>'+
+    '</div></div>';
+  }).join(""):'<p class="empty">目前沒有符合的待加入景點,從上方新增一個吧。</p>';
+  $("doneList").innerHTML=done.length?done.map(function(x){
+    return '<div class="place done"><div class="top">'+
+    '<span style="color:var(--ok);">✅</span><span class="name">'+esc(x.name)+'</span>'+
+    '<span class="list-tag">'+esc(x.list)+'</span>'+
+    '<button class="btn-sm" data-undo="'+attr(x.id)+'" style="min-height:34px;padding:5px 10px;">還原</button>'+
+    '<button class="btn-icon" data-del="'+attr(x.id)+'" aria-label="刪除">🗑️</button>'+
+    '</div></div>';
+  }).join(""):'<p class="empty">還沒有標記已加入的景點。</p>';
+  bindListActions($("pendList"));bindListActions($("doneList"));
+}
+function bindListActions(root){
+  root.querySelectorAll("[data-map]").forEach(function(b){b.addEventListener("click",function(){gmapSearch(b.dataset.map);});});
+  root.querySelectorAll("[data-done]").forEach(function(b){b.addEventListener("click",function(){
+    var p=places.find(function(x){return x.id===b.dataset.done;});
+    if(p){p.done=true;save();renderList();toast("已標記「"+p.name+"」");}
+  });});
+  root.querySelectorAll("[data-undo]").forEach(function(b){b.addEventListener("click",function(){
+    var p=places.find(function(x){return x.id===b.dataset.undo;});
+    if(p){p.done=false;save();renderList();}
+  });});
+  root.querySelectorAll("[data-del]").forEach(function(b){b.addEventListener("click",function(){
+    var p=places.find(function(x){return x.id===b.dataset.del;});
+    if(p&&confirm("刪除「"+p.name+"」?")){
+      places=places.filter(function(x){return x.id!==p.id;});
+      route=route.filter(function(s){return s.pid!==p.id;});
+      save();renderList();
+    }
+  });});
+}
+$("btnAdd").addEventListener("click",function(){
+  var n=$("inName").value.trim();
+  if(!n){$("inName").focus();return;}
+  if(hasPlace(n)){toast("「"+n+"」已經在名單裡了");return;}
+  places.unshift({id:uid(),name:n,cat:$("inCat").value,list:$("inList").value,note:$("inNote").value.trim(),done:false});
+  $("inName").value="";$("inNote").value="";
+  save();renderList();toast("已加入「"+n+"」");
+});
+$("q").addEventListener("input",function(){qText=this.value.trim();renderList();});
+$("fList").addEventListener("change",function(){curCat="全部";renderList();});
+
+/* ================= 頁 2:路線規劃 ================= */
+var route=[], mode="driving", doneLeg={};
+function renderRoute(){
+  var avail=places.slice();
+  $("routePick").innerHTML=avail.length?avail.map(function(x){
+    var i=route.findIndex(function(s){return s.pid===x.id;});
+    return '<div class="pickrow'+(i>=0?" on":"")+'" data-pid="'+attr(x.id)+'">'+
+    '<span class="box">'+(i>=0?(i+1):"")+'</span>'+
+    '<span class="n">'+esc(x.name)+'</span><span class="c">'+esc(x.cat)+'</span></div>';
+  }).join(""):'<p class="empty">口袋名單還是空的,先到「口袋名單」新增或用「匯入」搬家。</p>';
+  $("routePick").querySelectorAll(".pickrow").forEach(function(r){
+    r.addEventListener("click",function(){
+      var pid=r.dataset.pid,i=route.findIndex(function(s){return s.pid===pid;});
+      if(i>=0)route.splice(i,1);
+      else{var p=places.find(function(x){return x.id===pid;});route.push({name:p.name,pid:pid,tmp:false});}
+      doneLeg={};renderRoute();
+    });
+  });
+  $("routeOrder").innerHTML=
+  '<div class="stop"><span class="num">起</span><span class="n" style="color:var(--text2);">目前位置</span></div>'+
+  (route.length?route.map(function(s,i){
+    return '<div class="stop'+(s.tmp?" tmp":"")+'"><span class="num">'+(i+1)+'</span>'+
+    '<span class="n">'+esc(s.name)+'</span>'+(s.tmp?'<span class="tag">臨時</span>':'')+
+    '<span style="display:flex;gap:0;">'+
+    (i>0?'<button class="btn-icon" data-mv="'+i+',-1" aria-label="上移">⬆️</button>':'')+
+    (i<route.length-1?'<button class="btn-icon" data-mv="'+i+',1" aria-label="下移">⬇️</button>':'')+
+    '<button class="btn-icon" data-rm="'+i+'" aria-label="移除">✖️</button></span></div>';
+  }).join(""):'<p class="empty">還沒有停靠點,在上方點選或插入臨時地點。</p>');
+  $("routeOrder").querySelectorAll("[data-mv]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var a=b.dataset.mv.split(","),i=+a[0],d=+a[1],t=route[i];
+      route[i]=route[i+d];route[i+d]=t;doneLeg={};renderRoute();
+    });
+  });
+  $("routeOrder").querySelectorAll("[data-rm]").forEach(function(b){
+    b.addEventListener("click",function(){route.splice(+b.dataset.rm,1);doneLeg={};renderRoute();});
+  });
+  $("transitNote").style.display=(mode==="transit"&&route.length>1)?"block":"none";
+  $("maxNote").style.display=(mode!=="transit"&&route.length>9)?"block":"none";
+  renderGo();
+}
+function renderGo(){
+  if(!route.length){$("goArea").innerHTML='<button class="btn-primary" disabled>先點選或插入地點</button>';return;}
+  if(mode!=="transit"||route.length===1){
+    $("goArea").innerHTML='<button class="btn-primary" id="goAll">🧭 開啟 Google 地圖導航('+route.length+' 個停靠點)</button>';
+    $("goAll").addEventListener("click",function(){
+      var names=route.map(function(s){return s.name;}).slice(0,10);
+      var dest=names[names.length-1],wp=names.slice(0,-1);
+      var u="https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(dest)+
+        (wp.length?"&waypoints="+encodeURIComponent(wp.join("|")):"")+"&travelmode="+mode;
+      window.open(u,"_blank");
+    });
+    return;
+  }
+  var h='<div class="section-label" style="margin-top:0;">分段導航・共 '+route.length+' 段</div>';
+  for(var i=0;i<route.length;i++){
+    var from=i===0?"目前位置":route[i-1].name,to=route[i].name,ok=doneLeg[i];
+    h+='<button class="leg'+(ok?" ok2":"")+'" data-leg="'+i+'">'+
+    '<span class="num">'+(ok?"✓":(i+1))+'</span>'+
+    '<span class="t">'+esc(from)+' → '+esc(to)+'</span><span>🔗</span></button>';
+  }
+  $("goArea").innerHTML=h;
+  $("goArea").querySelectorAll("[data-leg]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var i=+b.dataset.leg;
+      var u="https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(route[i].name)+"&travelmode=transit";
+      if(i>0)u+="&origin="+encodeURIComponent(route[i-1].name);
+      doneLeg[i]=true;renderGo();window.open(u,"_blank");
+    });
+  });
+}
+$("btnTmp").addEventListener("click",function(){
+  var n=$("tmpName").value.trim();
+  if(!n){$("tmpName").focus();return;}
+  route.push({name:n,pid:null,tmp:true});
+  $("tmpName").value="";doneLeg={};renderRoute();
+});
+document.querySelectorAll(".mode").forEach(function(b){
+  b.addEventListener("click",function(){
+    mode=b.dataset.m;
+    document.querySelectorAll(".mode").forEach(function(x){x.classList.remove("on");});
+    b.classList.add("on");renderRoute();
+  });
+});
+
+/* ================= 頁 3:附近探索 ================= */
+var nearData=[], nearCat="全部", myPos=null;
+function haversine(a,b,c,d){
+  var R=6371000,r=Math.PI/180;
+  var x=Math.sin((c-a)*r/2),y=Math.sin((d-b)*r/2);
+  var h=x*x+Math.cos(a*r)*Math.cos(c*r)*y*y;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+function distTxt(m){return m<1000?Math.round(m)+" 公尺":(m/1000).toFixed(1)+" 公里";}
+function osmCat(t){
+  if(t.amenity==="cafe")return "咖啡";
+  if(t.amenity==="restaurant"||t.amenity==="fast_food"||t.amenity==="food_court"||t.amenity==="ice_cream")return "美食";
+  if(t.tourism||t.historic||t.leisure==="park")return "景點";
+  return "景點";
+}
+$("btnLoc").addEventListener("click",function(){
+  if(!navigator.geolocation){$("locStat").textContent="這個瀏覽器不支援定位。";return;}
+  $("btnLoc").disabled=true;
+  $("locStat").innerHTML='<span class="spin">⏳</span> 正在定位…(需要允許位置權限)';
+  navigator.geolocation.getCurrentPosition(function(pos){
+    myPos={lat:pos.coords.latitude,lng:pos.coords.longitude};
+    fetchNear();
+  },function(err){
+    $("btnLoc").disabled=false;
+    $("locStat").textContent="無法取得位置:"+(err.code===1?"你拒絕了位置權限,請到瀏覽器設定開啟。":"請確認 GPS 已開啟後再試一次。");
+  },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+});
+$("nearR").addEventListener("change",function(){if(myPos)fetchNear();});
+function fetchNear(){
+  var r=$("nearR").value;
+  $("locStat").innerHTML='<span class="spin">⏳</span> 正在搜尋附近 '+distTxt(+r)+' 內的景點與美食…';
+  $("nearList").innerHTML="";
+  var q="[out:json][timeout:20];("+
+    'node["amenity"~"restaurant|cafe|fast_food|food_court|ice_cream"](around:'+r+','+myPos.lat+','+myPos.lng+');'+
+    'node["tourism"~"attraction|museum|viewpoint|artwork|gallery|zoo|theme_park"](around:'+r+','+myPos.lat+','+myPos.lng+');'+
+    'way["tourism"~"attraction|museum|viewpoint|zoo|theme_park"](around:'+r+','+myPos.lat+','+myPos.lng+');'+
+    'node["historic"](around:'+r+','+myPos.lat+','+myPos.lng+');'+
+    ");out center 80;";
+  fetch("https://overpass-api.de/api/interpreter",{method:"POST",body:"data="+encodeURIComponent(q),
+    headers:{"Content-Type":"application/x-www-form-urlencoded"}})
+  .then(function(res){if(!res.ok)throw new Error("overpass "+res.status);return res.json();})
+  .then(function(js){
+    var seen={};
+    nearData=(js.elements||[]).map(function(e){
+      var t=e.tags||{},n=t["name:zh"]||t.name;
+      if(!n)return null;
+      var lat=e.lat||(e.center&&e.center.lat),lng=e.lon||(e.center&&e.center.lon);
+      if(!lat)return null;
+      if(seen[n])return null;seen[n]=1;
+      return {name:n,cat:osmCat(t),d:haversine(myPos.lat,myPos.lng,lat,lng)};
+    }).filter(Boolean).sort(function(a,b){return a.d-b.d;}).slice(0,40);
+    $("btnLoc").disabled=false;
+    $("locStat").textContent="📍 找到 "+nearData.length+" 個地點(依距離排序)";
+    $("nearCtrl").style.display="flex";$("btnGNear").style.display="block";
+    renderNearCats();renderNear();
+  })
+  .catch(function(){
+    $("btnLoc").disabled=false;
+    $("locStat").textContent="附近搜尋暫時無法使用(伺服器忙碌),稍後再試,或直接用下方按鈕開 Google 地圖。";
+    $("btnGNear").style.display="block";
+  });
+}
+function renderNearCats(){
+  var seen=["全部"];
+  nearData.forEach(function(x){if(seen.indexOf(x.cat)<0)seen.push(x.cat);});
+  if(seen.indexOf(nearCat)<0)nearCat="全部";
+  $("nearCats").innerHTML=seen.map(function(c){
+    return '<button class="chip'+(c===nearCat?" on":"")+'" data-c="'+attr(c)+'">'+esc(c)+'</button>';
+  }).join("");
+  $("nearCats").querySelectorAll(".chip").forEach(function(b){
+    b.addEventListener("click",function(){nearCat=b.dataset.c;renderNearCats();renderNear();});
+  });
+}
+function renderNear(){
+  var rows=nearData.filter(function(x){return nearCat==="全部"||x.cat===nearCat;});
+  $("nearList").innerHTML=rows.length?rows.map(function(x,i){
+    var inL=hasPlace(x.name);
+    return '<div class="place"><div class="top">'+
+    '<span class="name">'+esc(x.name)+'</span>'+catBadge(x.cat)+
+    '<span class="list-tag">🚶 '+distTxt(x.d)+'</span></div>'+
+    '<div class="actions">'+
+    (inL?'<button class="btn-sm" disabled style="color:var(--ok);">✅ 已在名單</button>':
+      '<button class="btn-sm" data-nadd="'+i+'">＋ 加入名單</button>')+
+    '<button class="btn-sm" data-map="'+attr(x.name)+'">🔗 Google 地圖</button>'+
+    '</div></div>';
+  }).join(""):'<p class="empty">這個分類附近沒有結果,換個分類或加大範圍試試。</p>';
+  $("nearList").querySelectorAll("[data-map]").forEach(function(b){b.addEventListener("click",function(){gmapSearch(b.dataset.map);});});
+  $("nearList").querySelectorAll("[data-nadd]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var rows2=nearData.filter(function(x){return nearCat==="全部"||x.cat===nearCat;});
+      var x=rows2[+b.dataset.nadd];
+      if(!x||hasPlace(x.name))return;
+      if(cats.indexOf(x.cat)<0)cats.push(x.cat);
+      places.unshift({id:uid(),name:x.name,cat:x.cat,list:lists[0],note:"",done:false});
+      save();renderList();renderNear();refreshSelects(null);toast("已加入「"+x.name+"」");
+    });
+  });
+}
+$("btnGNear").addEventListener("click",function(){
+  var u=myPos?"https://www.google.com/maps/search/"+encodeURIComponent("附近的景點")+"/@"+myPos.lat+","+myPos.lng+",15z"
+    :"https://www.google.com/maps/search/"+encodeURIComponent("附近的景點");
+  window.open(u,"_blank");
+});
+
+/* ================= 頁 4:Takeout 匯入 ================= */
+var impData=[];
+$("btnPick").addEventListener("click",function(){$("impFile").click();});
+$("impFile").addEventListener("change",function(){
+  var files=Array.from(this.files||[]);
+  if(!files.length)return;
+  $("impStatus").innerHTML='<div class="notice info"><span class="spin">⏳</span> 正在讀取檔案…</div>';
+  $("impPreview").innerHTML="";impData=[];
+  var jobs=[];
+  files.forEach(function(f){
+    var n=f.name.toLowerCase();
+    if(n.endsWith(".zip"))jobs.push(readZip(f));
+    else if(n.endsWith(".csv"))jobs.push(readText(f).then(function(t){parseCsv(t,baseName(f.name));}));
+    else if(n.endsWith(".json")||n.endsWith(".geojson"))jobs.push(readText(f).then(function(t){parseGeo(t,baseName(f.name));}));
+  });
+  Promise.all(jobs).then(showPreview).catch(function(e){
+    $("impStatus").innerHTML='<div class="notice warn">讀取失敗:'+esc(e.message||e)+'。請確認選的是 Takeout 匯出的 zip 或 csv/json 檔。</div>';
+  });
+  this.value="";
+});
+function baseName(n){return n.replace(/\.[^.]+$/,"").split("/").pop();}
+function readText(f){
+  return new Promise(function(res,rej){
+    var r=new FileReader();
+    r.onload=function(){res(r.result);};
+    r.onerror=function(){rej(new Error("無法讀取 "+f.name));};
+    r.readAsText(f,"utf-8");
+  });
+}
+function readZip(f){
+  return f.arrayBuffer().then(function(buf){return JSZip.loadAsync(buf);}).then(function(zip){
+    var jobs=[];
+    zip.forEach(function(path,entry){
+      if(entry.dir)return;
+      var n=path.toLowerCase();
+      if(n.endsWith(".csv"))jobs.push(entry.async("string").then(function(t){parseCsv(t,baseName(path));}));
+      else if(n.endsWith(".json")||n.endsWith(".geojson"))jobs.push(entry.async("string").then(function(t){parseGeo(t,baseName(path));}));
+    });
+    return Promise.all(jobs);
+  });
+}
+function parseCsvRows(text){
+  var rows=[],row=[],cell="",inQ=false;
+  for(var i=0;i<text.length;i++){
+    var ch=text[i];
+    if(inQ){
+      if(ch==='"'){if(text[i+1]==='"'){cell+='"';i++;}else inQ=false;}
+      else cell+=ch;
+    }else{
+      if(ch==='"')inQ=true;
+      else if(ch===","){row.push(cell);cell="";}
+      else if(ch==="\n"||ch==="\r"){
+        if(ch==="\r"&&text[i+1]==="\n")i++;
+        row.push(cell);cell="";
+        if(row.some(function(c){return c.trim()!=="";}))rows.push(row);
+        row=[];
+      }else cell+=ch;
+    }
+  }
+  row.push(cell);
+  if(row.some(function(c){return c.trim()!=="";}))rows.push(row);
+  return rows;
+}
+function parseCsv(text,listName){
+  var rows=parseCsvRows(text);
+  if(rows.length<2)return;
+  var head=rows[0].map(function(h){return h.trim().toLowerCase();});
+  var iName=head.findIndex(function(h){return h==="title"||h==="標題"||h==="name"||h==="名稱";});
+  var iNote=head.findIndex(function(h){return h==="note"||h==="備註"||h==="comment"||h==="註解";});
+  if(iName<0)iName=0;
+  for(var i=1;i<rows.length;i++){
+    var name=(rows[i][iName]||"").trim();
+    if(!name)continue;
+    impData.push({name:name,note:iNote>=0?(rows[i][iNote]||"").trim():"",list:listName,cat:guessCat(name)});
+  }
+}
+function parseGeo(text,listName){
+  var js;try{js=JSON.parse(text);}catch(e){return;}
+  var feats=js.features||[];
+  feats.forEach(function(f){
+    var p=f.properties||{},loc=p.location||{};
+    var name=(loc.name||p.title||p.Title||"").trim();
+    if(!name&&loc.address)name=loc.address.split(",")[0].trim();
+    if(!name)return;
+    impData.push({name:name,note:"",list:listName,cat:guessCat(name)});
+  });
+}
+var CAT_KW=[
+  ["咖啡",["咖啡","cafe","coffee","珈琲"]],
+  ["美食",["餐","食","飯","麵","麵包","牛排","火鍋","燒肉","壽司","拉麵","小吃","夜市","冰","甜點","蛋糕","茶","飲","粥","雞","鵝","鴨","肉圓","滷味","燒臘","便當","豆花","早餐","披薩","pizza","restaurant","bistro","食堂","居酒屋","串","丼","鍋"]],
+  ["住宿",["飯店","旅館","民宿","hotel","hostel","酒店","旅店","青年旅舍"]],
+  ["購物",["百貨","商場","市場","outlet","mall","商店","書店","超市"]]
+];
+function guessCat(name){
+  var n=name.toLowerCase();
+  for(var i=0;i<CAT_KW.length;i++){
+    for(var j=0;j<CAT_KW[i][1].length;j++){
+      if(n.indexOf(CAT_KW[i][1][j])>=0)return CAT_KW[i][0];
+    }
+  }
+  return "景點";
+}
+function showPreview(){
+  if(!impData.length){
+    $("impStatus").innerHTML='<div class="notice warn">檔案裡沒有找到地點。請確認 Takeout 匯出時有勾選「已儲存」(Saved)。</div>';
+    return;
+  }
+  var dup=impData.filter(function(x){return hasPlace(x.name);}).length;
+  var byList={};
+  impData.forEach(function(x){byList[x.list]=(byList[x.list]||0)+1;});
+  var listSummary=Object.keys(byList).map(function(l){return esc(l)+"("+byList[l]+")";}).join("、");
+  $("impStatus").innerHTML='<div class="notice ok">找到 '+impData.length+' 個地點,來自清單:'+listSummary+
+    (dup?"。其中 "+dup+" 個已在名單裡,會自動略過":"")+'。</div>';
+  var h='<div class="card"><div class="section-label" style="margin-top:0;">確認分類(自動判斷,可修改)</div><div class="imp-list">';
+  impData.forEach(function(x,i){
+    h+='<div class="imp-row"><span class="n">'+esc(x.name)+
+    (hasPlace(x.name)?' <span style="color:var(--muted);font-size:12px;">(已存在,略過)</span>':"")+'</span>'+
+    '<select data-ic="'+i+'">'+cats.map(function(c){
+      return '<option'+(c===x.cat?" selected":"")+'>'+esc(c)+'</option>';}).join("")+'</select></div>';
+  });
+  h+='</div><button class="btn-primary" id="btnImpGo" style="margin-top:12px;">📥 匯入 '+(impData.length-dup)+' 個地點</button></div>';
+  $("impPreview").innerHTML=h;
+  $("impPreview").querySelectorAll("[data-ic]").forEach(function(s){
+    s.addEventListener("change",function(){impData[+s.dataset.ic].cat=s.value;});
+  });
+  $("btnImpGo").addEventListener("click",function(){
+    var add=0;
+    impData.forEach(function(x){
+      if(hasPlace(x.name))return;
+      if(lists.indexOf(x.list)<0)lists.push(x.list);
+      if(cats.indexOf(x.cat)<0)cats.push(x.cat);
+      places.push({id:uid(),name:x.name,cat:x.cat,list:x.list,note:x.note,done:false});
+      add++;
+    });
+    save();refreshSelects(null);renderList();
+    $("impPreview").innerHTML="";impData=[];
+    $("impStatus").innerHTML='<div class="notice ok">✅ 已匯入 '+add+' 個地點,到「口袋名單」分頁查看。</div>';
+    toast("匯入完成:"+add+" 個地點");
+  });
+}
+
+/* ================= 啟動 ================= */
+load();
+refreshSelects(null);
+bindAddable($("inCat"),cats,"分類",renderList);
+bindAddable($("inList"),lists,"清單",renderList);
+renderList();
+</script>
+</body>
+</html>

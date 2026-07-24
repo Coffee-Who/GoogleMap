@@ -177,7 +177,15 @@ nav button.on{color:var(--accent); font-weight:700;}
 <!-- ============ 頁 2:路線規劃 ============ -->
 <section class="page" id="page-route">
   <div class="section-label" style="margin-top:0;">步驟 1・從口袋名單點選(點選順序 = 停靠順序)</div>
-  <div class="card" id="routePick"></div>
+  <div class="row" style="margin-bottom:2px;">
+    <div class="search-wrap" style="flex:1.6; margin-bottom:0;">
+      <span class="icon">🔍</span>
+      <input type="text" id="rq" placeholder="搜尋名稱">
+    </div>
+    <select id="rList" style="flex:1;"></select>
+  </div>
+  <div class="chips" id="rCats" style="margin:8px 0;"></div>
+  <div class="card" id="routePick" style="max-height:320px; overflow-y:auto;"></div>
   <div class="row" style="margin-bottom:4px;">
     <input type="text" id="tmpName" placeholder="臨時地點(台中車站、加油站)" style="flex:2.4;">
     <button class="btn-sm" id="btnTmp" style="flex:1;">＋ 插入</button>
@@ -401,15 +409,39 @@ $("q").addEventListener("input",function(){qText=this.value.trim();renderList();
 $("fList").addEventListener("change",function(){curCat="全部";renderList();});
 
 /* ================= 頁 2:路線規劃 ================= */
-var route=[], mode="driving", doneLeg={};
+var route=[], mode="driving", doneLeg={}, useCur=true, rCat="全部", rqText="";
+function renderRouteFilters(){
+  var rl=$("rList"),cur=rl.value||"__all__";
+  var h='<option value="__all__">全部清單</option>';
+  lists.forEach(function(l){h+='<option value="'+attr(l)+'"'+(l===cur?" selected":"")+'>'+esc(l)+'</option>';});
+  rl.innerHTML=h;
+  var base=places.filter(function(p){var l=rl.value||"__all__";return l==="__all__"||p.list===l;});
+  var seen=["全部"];
+  base.forEach(function(x){if(seen.indexOf(x.cat)<0)seen.push(x.cat);});
+  if(seen.indexOf(rCat)<0)rCat="全部";
+  $("rCats").innerHTML=seen.map(function(c){
+    var n=c==="全部"?base.length:base.filter(function(x){return x.cat===c;}).length;
+    return '<button class="chip'+(c===rCat?" on":"")+'" data-c="'+attr(c)+'">'+esc(c)+' '+n+'</button>';
+  }).join("");
+  $("rCats").querySelectorAll(".chip").forEach(function(b){
+    b.addEventListener("click",function(){rCat=b.dataset.c;renderRoute();});
+  });
+}
 function renderRoute(){
-  var avail=places.slice();
+  renderRouteFilters();
+  var l=$("rList").value||"__all__";
+  var avail=places.filter(function(p){
+    if(l!=="__all__"&&p.list!==l)return false;
+    if(rCat!=="全部"&&p.cat!==rCat)return false;
+    if(rqText&&p.name.indexOf(rqText)<0)return false;
+    return true;
+  });
   $("routePick").innerHTML=avail.length?avail.map(function(x){
     var i=route.findIndex(function(s){return s.pid===x.id;});
     return '<div class="pickrow'+(i>=0?" on":"")+'" data-pid="'+attr(x.id)+'">'+
     '<span class="box">'+(i>=0?(i+1):"")+'</span>'+
     '<span class="n">'+esc(x.name)+'</span><span class="c">'+esc(x.cat)+'</span></div>';
-  }).join(""):'<p class="empty">口袋名單還是空的,先到「口袋名單」新增或用「匯入」搬家。</p>';
+  }).join(""):'<p class="empty">'+(places.length?"這個條件下沒有景點,換個分類或清單試試。":"口袋名單還是空的,先到「口袋名單」新增或用「匯入」搬家。")+'</p>';
   $("routePick").querySelectorAll(".pickrow").forEach(function(r){
     r.addEventListener("click",function(){
       var pid=r.dataset.pid,i=route.findIndex(function(s){return s.pid===pid;});
@@ -419,7 +451,10 @@ function renderRoute(){
     });
   });
   $("routeOrder").innerHTML=
-  '<div class="stop"><span class="num">起</span><span class="n" style="color:var(--text2);">目前位置</span></div>'+
+  '<div class="stop" id="startRow" style="cursor:pointer;">'+
+  '<span class="num">'+(useCur?"起":"—")+'</span>'+
+  '<span class="n" style="color:var(--text2);">'+(useCur?"目前位置":"不用目前位置,直接從第 1 站出發")+'</span>'+
+  '<span style="font-size:12px;color:var(--accent);white-space:nowrap;">點一下切換</span></div>'+
   (route.length?route.map(function(s,i){
     return '<div class="stop'+(s.tmp?" tmp":"")+'"><span class="num">'+(i+1)+'</span>'+
     '<span class="n">'+esc(s.name)+'</span>'+(s.tmp?'<span class="tag">臨時</span>':'')+
@@ -437,40 +472,56 @@ function renderRoute(){
   $("routeOrder").querySelectorAll("[data-rm]").forEach(function(b){
     b.addEventListener("click",function(){route.splice(+b.dataset.rm,1);doneLeg={};renderRoute();});
   });
+  $("startRow").addEventListener("click",function(){useCur=!useCur;doneLeg={};renderRoute();});
   $("transitNote").style.display=(mode==="transit"&&route.length>1)?"block":"none";
   $("maxNote").style.display=(mode!=="transit"&&route.length>9)?"block":"none";
   renderGo();
 }
 function renderGo(){
   if(!route.length){$("goArea").innerHTML='<button class="btn-primary" disabled>先點選或插入地點</button>';return;}
-  if(mode!=="transit"||route.length===1){
+  if(!useCur&&route.length===1){
+    $("goArea").innerHTML='<button class="btn-primary" id="goAll">🔗 開啟 Google 地圖(只有 1 個地點)</button>';
+    $("goAll").addEventListener("click",function(){gmapSearch(route[0].name);});
+    return;
+  }
+  var legTotal=useCur?route.length:route.length-1;
+  if(mode!=="transit"||legTotal<=1){
     $("goArea").innerHTML='<button class="btn-primary" id="goAll">🧭 開啟 Google 地圖導航('+route.length+' 個停靠點)</button>';
     $("goAll").addEventListener("click",function(){
       var names=route.map(function(s){return s.name;}).slice(0,10);
-      var dest=names[names.length-1],wp=names.slice(0,-1);
-      var u="https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(dest)+
-        (wp.length?"&waypoints="+encodeURIComponent(wp.join("|")):"")+"&travelmode="+mode;
+      var u="https://www.google.com/maps/dir/?api=1&travelmode="+mode;
+      if(useCur){
+        var dest=names[names.length-1],wp=names.slice(0,-1);
+        u+="&destination="+encodeURIComponent(dest)+(wp.length?"&waypoints="+encodeURIComponent(wp.join("|")):"");
+      }else{
+        var org=names[0],dest2=names[names.length-1],wp2=names.slice(1,-1);
+        u+="&origin="+encodeURIComponent(org)+"&destination="+encodeURIComponent(dest2)+
+          (wp2.length?"&waypoints="+encodeURIComponent(wp2.join("|")):"");
+      }
       window.open(u,"_blank");
     });
     return;
   }
-  var h='<div class="section-label" style="margin-top:0;">分段導航・共 '+route.length+' 段</div>';
-  for(var i=0;i<route.length;i++){
-    var from=i===0?"目前位置":route[i-1].name,to=route[i].name,ok=doneLeg[i];
-    h+='<button class="leg'+(ok?" ok2":"")+'" data-leg="'+i+'">'+
-    '<span class="num">'+(ok?"✓":(i+1))+'</span>'+
+  var h='<div class="section-label" style="margin-top:0;">分段導航・共 '+legTotal+' 段</div>';
+  for(var k=0;k<legTotal;k++){
+    var fi=useCur?k-1:k, ti=useCur?k:k+1;
+    var from=fi<0?"目前位置":route[fi].name, to=route[ti].name, ok=doneLeg[k];
+    h+='<button class="leg'+(ok?" ok2":"")+'" data-leg="'+k+'">'+
+    '<span class="num">'+(ok?"✓":(k+1))+'</span>'+
     '<span class="t">'+esc(from)+' → '+esc(to)+'</span><span>🔗</span></button>';
   }
   $("goArea").innerHTML=h;
   $("goArea").querySelectorAll("[data-leg]").forEach(function(b){
     b.addEventListener("click",function(){
-      var i=+b.dataset.leg;
-      var u="https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(route[i].name)+"&travelmode=transit";
-      if(i>0)u+="&origin="+encodeURIComponent(route[i-1].name);
-      doneLeg[i]=true;renderGo();window.open(u,"_blank");
+      var k=+b.dataset.leg, fi=useCur?k-1:k, ti=useCur?k:k+1;
+      var u="https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(route[ti].name)+"&travelmode=transit";
+      if(fi>=0)u+="&origin="+encodeURIComponent(route[fi].name);
+      doneLeg[k]=true;renderGo();window.open(u,"_blank");
     });
   });
 }
+$("rq").addEventListener("input",function(){rqText=this.value.trim();renderRoute();});
+$("rList").addEventListener("change",function(){rCat="全部";renderRoute();});
 $("btnTmp").addEventListener("click",function(){
   var n=$("tmpName").value.trim();
   if(!n){$("tmpName").focus();return;}

@@ -207,6 +207,10 @@ nav button.on{color:var(--accent); font-weight:700;}
 
 <!-- ============ 頁 3:附近探索 ============ -->
 <section class="page" id="page-near">
+  <div class="chips" style="margin-top:0;">
+    <button class="chip on" id="nmExplore">🌐 探索新地點</button>
+    <button class="chip" id="nmMine">📋 只看我的口袋名單</button>
+  </div>
   <button class="btn-primary" id="btnLoc">📡 定位我的位置</button>
   <p class="hint" id="locStat">按下按鈕,列出附近的景點與美食(資料來源:OpenStreetMap)</p>
   <div class="row" id="nearCtrl" style="display:none; align-items:center; margin-top:10px;">
@@ -223,24 +227,25 @@ nav button.on{color:var(--accent); font-weight:700;}
 
 <!-- ============ 頁 4:匯入 ============ -->
 <section class="page" id="page-import">
+  <div class="card">
+    <div class="section-label" style="margin-top:0;">第 1 步・到 Google 下載你的地圖收藏</div>
+    <p style="font-size:13.5px; color:var(--text2); margin:0 0 10px;">按下方按鈕會開啟 Google Takeout 並<b>自動幫你勾選好項目</b>,你只需要:登入 → 按「下一步」→ 按「建立匯出作業」。</p>
+    <button class="btn-primary" id="btnTakeout">🚀 開啟 Google Takeout(已預選項目)</button>
+    <p class="hint">如果開啟後沒有自動勾選,手動勾「已儲存」和「地圖(您的地點)」即可。</p>
+  </div>
+  <div class="card">
+    <div class="section-label" style="margin-top:0;">第 2 步・等 Google 準備檔案</div>
+    <p style="font-size:13.5px; color:var(--text2); margin:0;">通常幾分鐘內完成,Google 會寄 Email 通知,或直接在 Takeout 頁面出現「下載」按鈕。把 .zip 檔存到手機(iPhone 存「檔案」、Android 存「下載」)。</p>
+  </div>
   <div class="drop">
     <div style="font-size:26px;">🗂️</div>
-    <p><b>從 Google 地圖搬家</b></p>
-    <p>選擇 Google Takeout 匯出的檔案:<br>可直接選 <b>.zip</b>,或解壓後的 <b>.csv / .json</b>(可多選)</p>
+    <p><b>第 3 步・把檔案丟進來</b></p>
+    <p>直接選 <b>.zip</b> 即可,不用解壓縮<br>(也支援解壓後的 .csv / .json,可多選)</p>
     <input type="file" id="impFile" accept=".zip,.csv,.json,.geojson" multiple style="display:none;">
     <button class="btn-sm" id="btnPick" style="margin-top:6px;">選擇檔案</button>
   </div>
   <div id="impStatus"></div>
   <div id="impPreview"></div>
-  <div class="card" style="margin-top:14px;">
-    <div class="section-label" style="margin-top:0;">怎麼從 Google 拿到檔案?</div>
-    <p style="font-size:13.5px; color:var(--text2); margin:0;">
-      1. 前往 <a href="https://takeout.google.com" target="_blank" style="color:var(--accent);">takeout.google.com</a> 並登入<br>
-      2. 按「取消全選」,只勾選「<b>已儲存</b>」(Saved)<br>
-      3. 按「下一步」→「建立匯出作業」,幾分鐘後收到下載連結<br>
-      4. 下載 zip 檔後回到這裡選擇檔案即可,已存在的相同地點會自動略過
-    </p>
-  </div>
 </section>
 
 </main>
@@ -537,7 +542,10 @@ document.querySelectorAll(".mode").forEach(function(b){
 });
 
 /* ================= 頁 3:附近探索 ================= */
-var nearData=[], nearCat="全部", myPos=null;
+var nearData=[], nearCat="全部", myPos=null, nearMode="explore";
+var LS_G="pocket_geo_v1", geoCache={};
+try{geoCache=JSON.parse(localStorage.getItem(LS_G))||{};}catch(e){geoCache={};}
+function saveGeo(){localStorage.setItem(LS_G,JSON.stringify(geoCache));}
 function haversine(a,b,c,d){
   var R=6371000,r=Math.PI/180;
   var x=Math.sin((c-a)*r/2),y=Math.sin((d-b)*r/2);
@@ -557,13 +565,91 @@ $("btnLoc").addEventListener("click",function(){
   $("locStat").innerHTML='<span class="spin">⏳</span> 正在定位…(需要允許位置權限)';
   navigator.geolocation.getCurrentPosition(function(pos){
     myPos={lat:pos.coords.latitude,lng:pos.coords.longitude};
-    fetchNear();
+    refreshNearView();
   },function(err){
     $("btnLoc").disabled=false;
     $("locStat").textContent="無法取得位置:"+(err.code===1?"你拒絕了位置權限,請到瀏覽器設定開啟。":"請確認 GPS 已開啟後再試一次。");
   },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
 });
-$("nearR").addEventListener("change",function(){if(myPos)fetchNear();});
+$("nearR").addEventListener("change",function(){if(myPos)refreshNearView();});
+$("nmExplore").addEventListener("click",function(){setNearMode("explore");});
+$("nmMine").addEventListener("click",function(){setNearMode("mine");});
+function setNearMode(m){
+  nearMode=m;nearCat="全部";
+  $("nmExplore").classList.toggle("on",m==="explore");
+  $("nmMine").classList.toggle("on",m==="mine");
+  if(myPos)refreshNearView();
+  else $("locStat").textContent=m==="mine"?"按上方按鈕定位後,列出你口袋名單裡離你最近的景點":"按下按鈕,列出附近的景點與美食(資料來源:OpenStreetMap)";
+}
+function refreshNearView(){
+  if(nearMode==="explore")fetchNear();
+  else mineNear();
+}
+/* ---- 我的口袋名單附近 ---- */
+var geoBusy=false;
+function coordOf(p){
+  if(p.lat&&p.lng)return {lat:p.lat,lng:p.lng};
+  var c=geoCache[p.name];
+  if(c&&c.lat)return c;
+  return null;
+}
+function mineNear(){
+  $("btnLoc").disabled=false;
+  $("nearCtrl").style.display="flex";$("btnGNear").style.display="none";
+  var noCoord=places.filter(function(p){return !coordOf(p)&&!(geoCache[p.name]&&geoCache[p.name].miss);});
+  renderMine();
+  if(noCoord.length&&!geoBusy)geocodeQueue(noCoord.slice(0,25));
+}
+function geocodeQueue(queue){
+  geoBusy=true;
+  var total=queue.length,done=0;
+  function next(){
+    if(!queue.length){geoBusy=false;saveGeo();renderMine();return;}
+    var p=queue.shift();done++;
+    $("locStat").innerHTML='<span class="spin">⏳</span> 正在為口袋名單定位('+done+'/'+total+')…第一次比較久,結果會記住';
+    fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q="+encodeURIComponent(p.name))
+    .then(function(r){return r.json();})
+    .then(function(js){
+      if(js&&js[0])geoCache[p.name]={lat:+js[0].lat,lng:+js[0].lon};
+      else geoCache[p.name]={miss:true};
+    })
+    .catch(function(){})
+    .then(function(){saveGeo();renderMine();setTimeout(next,1100);});
+  }
+  next();
+}
+function renderMine(){
+  var r=+$("nearR").value;
+  var rows=[],unknown=0;
+  places.forEach(function(p){
+    var c=coordOf(p);
+    if(!c){unknown++;return;}
+    var d=haversine(myPos.lat,myPos.lng,c.lat,c.lng);
+    if(d<=r)rows.push({name:p.name,cat:p.cat,list:p.list,d:d});
+  });
+  rows.sort(function(a,b){return a.d-b.d;});
+  var seen=["全部"];
+  rows.forEach(function(x){if(seen.indexOf(x.cat)<0)seen.push(x.cat);});
+  if(seen.indexOf(nearCat)<0)nearCat="全部";
+  $("nearCats").innerHTML=seen.map(function(c){
+    return '<button class="chip'+(c===nearCat?" on":"")+'" data-c="'+attr(c)+'">'+esc(c)+'</button>';
+  }).join("");
+  $("nearCats").querySelectorAll(".chip").forEach(function(b){
+    b.addEventListener("click",function(){nearCat=b.dataset.c;renderMine();});
+  });
+  if(!geoBusy)$("locStat").textContent="📍 你的口袋名單裡有 "+rows.length+" 個景點在 "+distTxt(r)+" 內"+(unknown?"(另有 "+unknown+" 個暫時無法定位)":"");
+  var show=rows.filter(function(x){return nearCat==="全部"||x.cat===nearCat;});
+  $("nearList").innerHTML=show.length?show.map(function(x){
+    return '<div class="place"><div class="top">'+
+    '<span class="name">'+esc(x.name)+'</span>'+catBadge(x.cat)+
+    '<span class="list-tag">🚶 '+distTxt(x.d)+'</span></div>'+
+    '<p class="note">'+esc(x.list)+'</p>'+
+    '<div class="actions">'+
+    '<button class="btn-sm" data-map="'+attr(x.name)+'">🔗 Google 地圖</button>'+
+    '</div></div>';
+  }).join(""):'<p class="empty">'+(geoBusy?"定位中,結果會陸續出現…":"這個範圍內沒有你名單裡的景點,試著加大範圍。")+'</p>';
+  $("nearList").querySelectorAll("[data-map]").forEach(function(b){b.addEventListener("click",function(){gmapSearch(b.dataset.map);});});
+}
 function fetchNear(){
   var r=$("nearR").value;
   $("locStat").innerHTML='<span class="spin">⏳</span> 正在搜尋附近 '+distTxt(+r)+' 內的景點與美食…';
@@ -642,6 +728,9 @@ $("btnGNear").addEventListener("click",function(){
 
 /* ================= 頁 4:Takeout 匯入 ================= */
 var impData=[];
+$("btnTakeout").addEventListener("click",function(){
+  window.open("https://takeout.google.com/settings/takeout/custom/saved,maps_your_places","_blank");
+});
 $("btnPick").addEventListener("click",function(){$("impFile").click();});
 $("impFile").addEventListener("change",function(){
   var files=Array.from(this.files||[]);
@@ -709,11 +798,17 @@ function parseCsv(text,listName){
   var head=rows[0].map(function(h){return h.trim().toLowerCase();});
   var iName=head.findIndex(function(h){return h==="title"||h==="標題"||h==="name"||h==="名稱";});
   var iNote=head.findIndex(function(h){return h==="note"||h==="備註"||h==="comment"||h==="註解";});
+  var iUrl=head.findIndex(function(h){return h==="url"||h==="網址"||h==="link";});
   if(iName<0)iName=0;
   for(var i=1;i<rows.length;i++){
     var name=(rows[i][iName]||"").trim();
     if(!name)continue;
-    impData.push({name:name,note:iNote>=0?(rows[i][iNote]||"").trim():"",list:listName,cat:guessCat(name)});
+    var item={name:name,note:iNote>=0?(rows[i][iNote]||"").trim():"",list:listName,cat:guessCat(name)};
+    if(iUrl>=0){
+      var m=(rows[i][iUrl]||"").match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)||(rows[i][iUrl]||"").match(/[@\/](-?\d+\.\d{3,}),(-?\d+\.\d{3,})/);
+      if(m){item.lat=+m[1];item.lng=+m[2];}
+    }
+    impData.push(item);
   }
 }
 function parseGeo(text,listName){
@@ -724,7 +819,11 @@ function parseGeo(text,listName){
     var name=(loc.name||p.title||p.Title||"").trim();
     if(!name&&loc.address)name=loc.address.split(",")[0].trim();
     if(!name)return;
-    impData.push({name:name,note:"",list:listName,cat:guessCat(name)});
+    var item={name:name,note:"",list:listName,cat:guessCat(name)};
+    var g=f.geometry;
+    if(g&&g.type==="Point"&&g.coordinates&&g.coordinates.length>=2){item.lng=+g.coordinates[0];item.lat=+g.coordinates[1];}
+    else if(loc.coordinates){item.lng=+loc.coordinates.longitude;item.lat=+loc.coordinates.latitude;}
+    impData.push(item);
   });
 }
 var CAT_KW=[
@@ -771,7 +870,9 @@ function showPreview(){
       if(hasPlace(x.name))return;
       if(lists.indexOf(x.list)<0)lists.push(x.list);
       if(cats.indexOf(x.cat)<0)cats.push(x.cat);
-      places.push({id:uid(),name:x.name,cat:x.cat,list:x.list,note:x.note,done:false});
+      var item={id:uid(),name:x.name,cat:x.cat,list:x.list,note:x.note,done:false};
+      if(x.lat&&x.lng){item.lat=x.lat;item.lng=x.lng;}
+      places.push(item);
       add++;
     });
     save();refreshSelects(null);renderList();

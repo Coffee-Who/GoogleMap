@@ -605,19 +605,17 @@ html[data-theme="light"] .q-n{color:var(--a-900);}
 
 <section class="page" id="page-metro">
   <div class="mtabs" id="mCities"></div>
-  <div class="section-label" style="margin:10px 0 6px;">依票券篩選路線</div>
-  <div class="chips" id="mPassRow" style="margin:0 0 4px;"></div>
-  <p class="hint" id="mPassNote" style="margin:0 0 10px;"></p>
-  <div class="card" style="margin-bottom:10px;">
-    <div class="section-label" style="margin:0 0 8px;">路線規劃</div>
-    <div class="row" style="margin-bottom:8px;">
-      <select id="rpFrom"></select>
+  <div class="section-label" style="margin:10px 12px 6px;">依票券篩選路線</div>
+  <div class="chips" id="mPassRow" style="margin:0 12px 4px;"></div>
+  <p class="hint" id="mPassNote" style="margin:0 16px 10px;"></p>
+  <div style="padding:0 12px;">
+    <div class="card" style="margin-bottom:10px;">
+      <div class="section-label" style="margin:0 0 8px;">路線規劃</div>
+      <select id="rpFrom" style="margin-bottom:8px;"></select>
+      <select id="rpTo" style="margin-bottom:10px;"></select>
+      <button class="btn-primary" id="rpGo">用 Google 地圖規劃路線</button>
+      <p class="hint" id="rpHint" style="margin:8px 0 0;"></p>
     </div>
-    <div class="row">
-      <select id="rpTo"></select>
-      <button class="btn-sm btn-primary" id="rpGo" style="flex:0 0 auto;">規劃</button>
-    </div>
-    <div id="rpResult" style="margin-top:10px;"></div>
   </div>
   <div class="mlyr" id="mLayers"></div>
   <div class="mnote" id="mNote"></div>
@@ -755,6 +753,7 @@ function goPage(p){
   document.querySelectorAll(".page").forEach(function(pg){pg.classList.remove("active");});
   $("page-"+p).classList.add("active");
   $("fabAdd").style.display=(p==="list")?"flex":"none";
+  document.querySelector("header").style.display=(p==="metro")?"none":"flex";
   if(p==="route")renderRoute();
   if(p==="near"){try{renderSrcBar();}catch(e){}}
   if(p==="metro"){ if(!mSvg){mMeasure();mInit();} else {mMeasure();mApply();} }
@@ -1496,7 +1495,7 @@ function mLoad(c){
   mSc=1;mTx=0;mTy=0;mApply();mBindHits();mCloseSheet();mLayers();mApplyLayer();
   $("mQ").value="";mSearch();
   mRenderPassChips();mApplyPassOverlay();
-  mBuildGraph();mFillRouteSelects();$("rpResult").innerHTML="";
+  mFillRouteSelects();
 }
 function mApply(){mRoot.setAttribute("transform","translate("+mTx+","+mTy+") scale("+mSc+")");}
 function mK(){var r=mSvg.getBoundingClientRect(),vb=mSvg.viewBox.baseVal;
@@ -1747,84 +1746,21 @@ function mApplyPassOverlay(){
   mRoot.appendChild(g);
   $("mPassNote").textContent=off?("灰色 = 這張 PASS 不含的車站,共 "+off+" 站(僅供參考,實際範圍請以票券官方資訊為準)"):"這張 PASS 涵蓋這張圖上的所有路線。";
 }
-/* ================= 兩站間路線規劃(同線相鄰站串接,BFS 找最少站數/轉乘) ================= */
-var mGraph={};
-function mBuildGraph(){
-  mGraph={};
-  var byLine={};
-  mST.forEach(function(s,i){
-    s.l.forEach(function(ln){(byLine[ln]=byLine[ln]||[]).push(i);});
-  });
-  Object.keys(byLine).forEach(function(ln){
-    var arr=byLine[ln];
-    for(var k=0;k<arr.length-1;k++){
-      var a=arr[k],b=arr[k+1];
-      (mGraph[a]=mGraph[a]||[]).push({to:b,line:ln});
-      (mGraph[b]=mGraph[b]||[]).push({to:a,line:ln});
-    }
-  });
-}
+/* ================= 兩站間路線規劃:選起訖站後直接開 Google 地圖導航 ================= */
 function mFillRouteSelects(){
   var opts=mST.map(function(s,i){return '<option value="'+i+'">'+esc(s.n)+'</option>';}).join("");
   $("rpFrom").innerHTML='<option value="">起點車站</option>'+opts;
   $("rpTo").innerHTML='<option value="">迄點車站</option>'+opts;
-}
-function mFindRoute(from,to){
-  if(from===to)return null;
-  var q=[from],prev={};prev[from]=null;
-  while(q.length){
-    var cur=q.shift();
-    if(cur===to)break;
-    (mGraph[cur]||[]).forEach(function(edge){
-      if(!(edge.to in prev)){prev[edge.to]={from:cur,line:edge.line};q.push(edge.to);}
-    });
-  }
-  if(!(to in prev))return null;
-  var path=[],cur=to;
-  while(cur!==null&&cur!==undefined){
-    path.unshift(cur);
-    var p=prev[cur];
-    if(!p)break;
-    cur=p.from;
-  }
-  if(path[0]!==from)return null;
-  var legs=[];
-  for(var k=0;k<path.length-1;k++){
-    var edge=(mGraph[path[k]]||[]).find(function(e){return e.to===path[k+1];});
-    legs.push({from:path[k],to:path[k+1],line:edge?edge.line:""});
-  }
-  return legs;
+  $("rpHint").textContent="";
 }
 $("rpGo").addEventListener("click",function(){
   var from=$("rpFrom").value,to=$("rpTo").value;
-  if(from===""||to===""){$("rpResult").innerHTML='<p class="hint" style="margin:0">請選起點和迄點車站</p>';return;}
-  from=+from;to=+to;
-  var legs=mFindRoute(from,to);
-  if(!legs){$("rpResult").innerHTML='<p class="hint" style="margin:0">這張圖上的資料找不到這兩站之間的連通路徑(可能不同城市或路線圖沒有畫出來)</p>';return;}
-  var segs=[],curLine=null,segStart=0;
-  legs.forEach(function(leg,idx){
-    if(leg.line!==curLine){
-      if(curLine!==null)segs.push({line:curLine,from:segStart,to:leg.from});
-      curLine=leg.line;segStart=leg.from;
-    }
-    if(idx===legs.length-1)segs.push({line:curLine,from:segStart,to:leg.to});
-  });
-  var transfers=segs.length-1;
-  var html='<div style="font-size:13.5px;font-weight:700;margin-bottom:10px">共 '+segs.length+' 段・'+transfers+' 次轉乘・約 '+legs.length+' 站</div>';
-  segs.forEach(function(seg,i){
-    var lineColor=(METRO[mCity].col&&METRO[mCity].col[seg.line])||"var(--accent)";
-    var fromName=mST[seg.from].n,toName=mST[seg.to].n;
-    var stops=0,cur=seg.from;
-    for(var k=0;k<legs.length;k++){if(legs[k].line===seg.line&&legs[k].from===cur){stops++;cur=legs[k].to;}}
-    html+='<div class="row" style="margin-bottom:10px;align-items:flex-start">'+
-      '<div style="width:10px;height:10px;border-radius:50%;background:'+lineColor+';margin-top:4px;flex:0 0 auto"></div>'+
-      '<div style="flex:1">'+
-      '<div style="font-size:13.5px;font-weight:700">'+(i===0?esc(fromName):esc(fromName)+' <span class="tag" style="color:var(--accent);font-size:10px">轉乘</span>')+'</div>'+
-      '<div style="font-size:11.5px;color:var(--text2)">搭乘 <b style="color:'+lineColor+'">'+esc(seg.line)+'</b> ・ '+stops+' 站 → '+esc(toName)+'</div>'+
-      '</div></div>';
-  });
-  html+='<p class="hint" style="margin:4px 0 0">⚠️ 這是依線圖站序推算出的示意路徑,不含實際時刻表、車資或即時營運狀況。</p>';
-  $("rpResult").innerHTML=html;
+  if(from===""||to===""){$("rpHint").textContent="請選起點和迄點車站。";return;}
+  if(from===to){$("rpHint").textContent="起點和迄點是同一站,換一個試試。";return;}
+  var fromName=mStName(mST[+from]),toName=mStName(mST[+to]);
+  var u="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(fromName)+
+    "&destination="+encodeURIComponent(toName)+"&travelmode=transit";
+  window.open(u,"_blank");
 });
 function mOpen(i){
   if(i<0||i>=mST.length)return;

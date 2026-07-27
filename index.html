@@ -328,7 +328,7 @@ body.mFsOn #mWrap{position:fixed;inset:0;z-index:250;}
 .distCap.on{color:var(--a-text);font-weight:700;}
 .hDivider{height:1px;background:var(--stroke);margin:14px 0;}
 .vDivider{width:1px;align-self:stretch;background:var(--stroke);margin:0 4px;}
-#nearCtrl{flex-direction:column;}
+#nearCtrl{flex-direction:column!important;}
 .distCircle.modeToggle.on{background:linear-gradient(135deg,var(--accent),var(--accent-dark));border:none;color:var(--on-accent);}
 /* 車站高亮泡泡與四種 PASS 狀態徽章 */
 .mPickLabelBg{fill:var(--a-500);}
@@ -576,7 +576,6 @@ html[data-theme="light"] .q-n{color:var(--a-900);}
         <div class="distItem"><button class="distCircle sortCircle on" data-s="dist">&#128205;</button><span class="distCap on">依距離</span></div>
         <div class="distItem"><button class="distCircle sortCircle" data-s="rating">&#9733;</button><span class="distCap">依評價</span></div>
         <div class="distItem"><button class="distCircle modeToggle" id="nmMineBtn">&#128278;</button><span class="distCap" id="nmMineCap">只看口袋名單</span></div>
-        <div class="distItem"><button class="distCircle sortCircle" data-s="inlist">&#128204;</button><span class="distCap">依口袋名單</span></div>
       </span>
     </div>
   </div>
@@ -1162,7 +1161,7 @@ function coordOf(p){
 }
 function mineNear(){
   $("btnLoc").disabled=false;
-  $("nearCtrl").style.display="flex";$("nearOut").style.display="flex";
+  $("nearCtrl").style.display="flex";$("nearCtrl").style.flexDirection="column";$("nearOut").style.display="flex";
   var noCoord=places.filter(function(p){return !coordOf(p)&&!(geoCache[p.name]&&geoCache[p.name].miss);});
   renderMine();
   if(noCoord.length&&!geoBusy)geocodeQueue(noCoord.slice(0,25));
@@ -1264,7 +1263,7 @@ function fetchNear(){
     }).filter(Boolean).sort(function(a,b){return a.d-b.d;}).slice(0,90);
     $("btnLoc").disabled=false;
     $("locStat").textContent="找到 "+nearData.length+" 個地點(依距離排序)";
-    $("nearCtrl").style.display="flex";$("nearOut").style.display="flex";
+    $("nearCtrl").style.display="flex";$("nearCtrl").style.flexDirection="column";$("nearOut").style.display="flex";
     renderNearCats();renderNearSort();renderNear();
   })
   .catch(function(){
@@ -1281,7 +1280,7 @@ function fetchNearGoogle(r){
     nearData=rows.slice(0,90);
     $("btnLoc").disabled=false;
     $("locStat").textContent="找到 "+nearData.length+" 個地點(依距離排序)";
-    $("nearCtrl").style.display="flex";$("btnGNear").style.display="block";
+    $("nearCtrl").style.display="flex";$("nearCtrl").style.flexDirection="column";$("btnGNear").style.display="block";
     renderSrcBar();renderNearCats();renderNearSort();renderNear();
     if($("gsSheet")&&$("gsSheet").classList.contains("show"))openGSet();
   },function(e){

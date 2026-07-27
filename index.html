@@ -327,6 +327,9 @@ body.mFsOn #mWrap{position:fixed;inset:0;z-index:250;}
 .distCap{font-size:11px;color:var(--muted);}
 .distCap.on{color:var(--a-text);font-weight:700;}
 .hDivider{height:1px;background:var(--stroke);margin:14px 0;}
+.vDivider{width:1px;align-self:stretch;background:var(--stroke);margin:0 4px;}
+#nearCtrl{flex-direction:column;}
+.distCircle.modeToggle.on{background:linear-gradient(135deg,var(--accent),var(--accent-dark));border:none;color:var(--on-accent);}
 /* 車站高亮泡泡與四種 PASS 狀態徽章 */
 .mPickLabelBg{fill:var(--a-500);}
 .mPickLabelTxt{fill:#1E1204;font-weight:700;}
@@ -556,23 +559,25 @@ html[data-theme="light"] .q-n{color:var(--a-900);}
 <section class="page" id="page-near">
   <div class="chips" style="margin-top:0;">
     <button class="chip on" id="nmExplore">探索新地點</button>
-    <button class="chip" id="nmMine">只看我的口袋名單</button>
   </div>
   <div class="src-bar" id="srcBar" onclick="openGSet()"></div>
   <button class="btn-primary" id="btnLoc">定位我的位置</button>
   <p class="hint" id="locStat">按下按鈕,列出附近的景點與美食(資料來源:OpenStreetMap)</p>
   <div id="nearCtrl" style="display:none; margin-top:10px;">
     <div class="chips" id="nearCats" style="margin:0 0 12px;"></div>
-    <div class="distRow" id="nearRBtns">
-      <div class="distItem"><button class="distCircle" data-r="500">0.5</button><span class="distCap">公里</span></div>
-      <div class="distItem"><button class="distCircle on" data-r="1000">1</button><span class="distCap on">公里</span></div>
-      <div class="distItem"><button class="distCircle" data-r="3000">3</button><span class="distCap">公里</span></div>
-    </div>
-    <div class="hDivider"></div>
-    <div class="distRow" id="nearSortBtns">
-      <div class="distItem"><button class="distCircle sortCircle on" data-s="dist">&#128205;</button><span class="distCap on">依距離</span></div>
-      <div class="distItem"><button class="distCircle sortCircle" data-s="rating">&#9733;</button><span class="distCap">依評價</span></div>
-      <div class="distItem"><button class="distCircle sortCircle" data-s="inlist">&#128204;</button><span class="distCap">依口袋名單</span></div>
+    <div class="distRow">
+      <span id="nearRBtns" style="display:contents">
+        <div class="distItem"><button class="distCircle" data-r="500">0.5</button><span class="distCap">公里</span></div>
+        <div class="distItem"><button class="distCircle on" data-r="1000">1</button><span class="distCap on">公里</span></div>
+        <div class="distItem"><button class="distCircle" data-r="3000">3</button><span class="distCap">公里</span></div>
+      </span>
+      <div class="vDivider"></div>
+      <span id="nearSortBtns" style="display:contents">
+        <div class="distItem"><button class="distCircle sortCircle on" data-s="dist">&#128205;</button><span class="distCap on">依距離</span></div>
+        <div class="distItem"><button class="distCircle sortCircle" data-s="rating">&#9733;</button><span class="distCap">依評價</span></div>
+        <div class="distItem"><button class="distCircle modeToggle" id="nmMineBtn">&#128278;</button><span class="distCap" id="nmMineCap">只看口袋名單</span></div>
+        <div class="distItem"><button class="distCircle sortCircle" data-s="inlist">&#128204;</button><span class="distCap">依口袋名單</span></div>
+      </span>
     </div>
   </div>
   <div id="nearList" style="margin-top:10px;"></div>
@@ -1135,11 +1140,12 @@ $("nearSortBtns").querySelectorAll(".sortCircle").forEach(function(b){
   });
 });
 $("nmExplore").addEventListener("click",function(){setNearMode("explore");});
-$("nmMine").addEventListener("click",function(){setNearMode("mine");});
+$("nmMineBtn").addEventListener("click",function(){setNearMode(nearMode==="mine"?"explore":"mine");});
 function setNearMode(m){
   nearMode=m;nearCatSel=[];
   $("nmExplore").classList.toggle("on",m==="explore");
-  $("nmMine").classList.toggle("on",m==="mine");
+  $("nmMineBtn").classList.toggle("on",m==="mine");
+  $("nmMineCap").classList.toggle("on",m==="mine");
   if(myPos)refreshNearView();
   else $("locStat").textContent=m==="mine"?"按上方按鈕定位後,列出你口袋名單裡離你最近的景點":"按下按鈕,列出附近的景點與美食(資料來源:OpenStreetMap)";
 }

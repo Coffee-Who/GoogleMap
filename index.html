@@ -326,7 +326,7 @@ body.mFsOn #mWrap{position:fixed;inset:0;z-index:250;}
 .distCircle.sortCircle{font-size:19px;}
 .distCap{font-size:11px;color:var(--muted);}
 .distCap.on{color:var(--a-text);font-weight:700;}
-.distDivider{width:1px;align-self:stretch;background:var(--stroke);margin:2px 2px;}
+.hDivider{height:1px;background:var(--stroke);margin:14px 0;}
 /* 車站高亮泡泡與四種 PASS 狀態徽章 */
 .mPickLabelBg{fill:var(--a-500);}
 .mPickLabelTxt{fill:#1E1204;font-weight:700;}
@@ -567,9 +567,12 @@ html[data-theme="light"] .q-n{color:var(--a-900);}
       <div class="distItem"><button class="distCircle" data-r="500">0.5</button><span class="distCap">公里</span></div>
       <div class="distItem"><button class="distCircle on" data-r="1000">1</button><span class="distCap on">公里</span></div>
       <div class="distItem"><button class="distCircle" data-r="3000">3</button><span class="distCap">公里</span></div>
-      <div class="distDivider"></div>
-      <div class="distItem"><button class="distCircle sortCircle on" data-s="dist">&#128205;</button><span class="distCap on" id="nearSortDistCap">距離</span></div>
-      <div class="distItem"><button class="distCircle sortCircle" data-s="rating">&#9733;</button><span class="distCap" id="nearSortRatingCap">評價</span></div>
+    </div>
+    <div class="hDivider"></div>
+    <div class="distRow" id="nearSortBtns">
+      <div class="distItem"><button class="distCircle sortCircle on" data-s="dist">&#128205;</button><span class="distCap on">依距離</span></div>
+      <div class="distItem"><button class="distCircle sortCircle" data-s="rating">&#9733;</button><span class="distCap">依評價</span></div>
+      <div class="distItem"><button class="distCircle sortCircle" data-s="inlist">&#128204;</button><span class="distCap">依口袋名單</span></div>
     </div>
   </div>
   <div id="nearList" style="margin-top:10px;"></div>
@@ -1111,21 +1114,21 @@ $("btnLoc").addEventListener("click",function(){
     $("locStat").textContent="無法取得位置:"+(err.code===1?"你拒絕了位置權限,請到瀏覽器設定開啟。":"請確認 GPS 已開啟後再試一次。");
   },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
 });
-$("nearRBtns").querySelectorAll(".distCircle[data-r]").forEach(function(b){
+$("nearRBtns").querySelectorAll(".distCircle").forEach(function(b){
   b.addEventListener("click",function(){
     nearR=+b.dataset.r;
-    $("nearRBtns").querySelectorAll(".distCircle[data-r]").forEach(function(x){x.classList.remove("on");});
-    $("nearRBtns").querySelectorAll(".distCircle[data-r]+.distCap").forEach(function(x){x.classList.remove("on");});
+    $("nearRBtns").querySelectorAll(".distCircle").forEach(function(x){x.classList.remove("on");});
+    $("nearRBtns").querySelectorAll(".distCap").forEach(function(x){x.classList.remove("on");});
     b.classList.add("on");
     b.nextElementSibling.classList.add("on");
     if(myPos)refreshNearView();
   });
 });
-$("nearRBtns").querySelectorAll(".sortCircle").forEach(function(b){
+$("nearSortBtns").querySelectorAll(".sortCircle").forEach(function(b){
   b.addEventListener("click",function(){
     nearSort=b.dataset.s;
-    $("nearRBtns").querySelectorAll(".sortCircle").forEach(function(x){x.classList.remove("on");});
-    $("nearRBtns").querySelectorAll(".sortCircle+.distCap").forEach(function(x){x.classList.remove("on");});
+    $("nearSortBtns").querySelectorAll(".sortCircle").forEach(function(x){x.classList.remove("on");});
+    $("nearSortBtns").querySelectorAll(".distCap").forEach(function(x){x.classList.remove("on");});
     b.classList.add("on");
     b.nextElementSibling.classList.add("on");
     renderNear();
@@ -1293,16 +1296,14 @@ function renderNearCats(){
 var nearSort="dist";
 function renderNearSort(){
   var hasRating=nearData.some(function(x){return typeof x.rating==="number";});
-  var items=$("nearRBtns").querySelectorAll(".sortCircle");
-  var wrap1=items[0]&&items[0].closest(".distItem"), wrap2=items[1]&&items[1].closest(".distItem");
-  var div=$("nearRBtns").querySelector(".distDivider");
+  var ratingItem=$("nearSortBtns").querySelector('[data-s="rating"]').closest(".distItem");
   if(!hasRating){
-    nearSort="dist";
-    if(wrap1)wrap1.style.display="none"; if(wrap2)wrap2.style.display="none"; if(div)div.style.display="none";
-    return;
+    ratingItem.style.display="none";
+    if(nearSort==="rating")nearSort="dist";
+  }else{
+    ratingItem.style.display="";
   }
-  if(wrap1)wrap1.style.display=""; if(wrap2)wrap2.style.display=""; if(div)div.style.display="";
-  items.forEach(function(b){
+  $("nearSortBtns").querySelectorAll(".sortCircle").forEach(function(b){
     var on=b.dataset.s===nearSort;
     b.classList.toggle("on",on);
     b.nextElementSibling.classList.toggle("on",on);
@@ -1314,6 +1315,12 @@ function nearRows(){
     rows.sort(function(a,b){
       var ra=(typeof a.rating==="number")?a.rating:-1, rb=(typeof b.rating==="number")?b.rating:-1;
       if(rb!==ra)return rb-ra;
+      return a.d-b.d;
+    });
+  }else if(nearSort==="inlist"){
+    rows.sort(function(a,b){
+      var ia=hasPlace(a.name)?1:0, ib=hasPlace(b.name)?1:0;
+      if(ib!==ia)return ib-ia;
       return a.d-b.d;
     });
   }else{

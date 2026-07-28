@@ -281,7 +281,15 @@ nav button.on{color:var(--accent); font-weight:700;}
 .pp-reco-item{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:12px;
   background:var(--glass2);margin-bottom:8px;}
 .pp-reco-item.top{border-left:3px solid var(--a-500);}
-.pp-reco-item .medal{font-size:16px;line-height:1;}
+.pp-reco-item .nm{font-size:13.5px;font-weight:700;margin-bottom:6px;}
+.pp-why-list{display:flex;flex-direction:column;gap:6px;margin-bottom:4px;}
+.pp-why-row{display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.6;}
+.pp-why-row span{flex-shrink:0;width:16px;text-align:center;font-weight:800;}
+.pp-why-row.ok span{color:var(--ok);}
+.pp-why-row.no span{color:var(--muted);}
+.pp-why-row.no{color:var(--muted);}
+.pp-why-row b{font-weight:700;color:var(--text);}
+.pp-why-row.no b{color:var(--text2);}
 .pp-reco-item .nm{font-size:13.5px;font-weight:700;}
 .pp-reco-item .why{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.6;}
 html[data-theme="light"] #passPage{background:var(--surface2);}
@@ -2203,10 +2211,13 @@ function ppGeocode(query){
     });
   });
 }
-function ppAreaMatch(geo,areaKeywords){
-  if(!geo)return false;
+function ppAreaMatchKeyword(geo,areaKeywords){
+  if(!geo)return null;
   var hay=(geo.formatted+" "+geo.comps.join(" ")).toLowerCase();
-  return areaKeywords.some(function(k){return hay.indexOf(k.toLowerCase())>=0;});
+  for(var i=0;i<areaKeywords.length;i++){
+    if(hay.indexOf(areaKeywords[i].toLowerCase())>=0)return areaKeywords[i];
+  }
+  return null;
 }
 async function ppRecommend(){
   var box=$("ppRecoRes");
@@ -2239,11 +2250,19 @@ async function ppRecommend(){
     return;
   }
   var scored=PASS_CATALOG.filter(function(p){return !p.excludeFromReco;}).map(function(p){
-    var matched=resolved.filter(function(r){
-      if(!r.byArea)return r.lines.some(function(l){return ppLineCovered(p.kind,l);});
-      return ppAreaMatch(r.geo,PASS_AREA_KEYWORDS[p.id]||[]);
+    var matched=[],unmatched=[];
+    resolved.forEach(function(r){
+      if(!r.byArea){
+        var line=r.lines.filter(function(l){return ppLineCovered(p.kind,l);})[0];
+        if(line)matched.push({place:r.place,reason:"車站在「"+line+"」,這張票券有涵蓋這條路線"});
+        else unmatched.push(r.place);
+      }else{
+        var kw=ppAreaMatchKeyword(r.geo,PASS_AREA_KEYWORDS[p.id]||[]);
+        if(kw)matched.push({place:r.place,reason:"地理位置估算落在「"+kw+"」一帶,這張票券的範圍有包含(依地理位置估算,較粗略)"});
+        else unmatched.push(r.place);
+      }
     });
-    return {pass:p,matched:matched,score:matched.length};
+    return {pass:p,matched:matched,unmatched:unmatched,score:matched.length};
   }).filter(function(x){return x.score>0;}).sort(function(a,b){return b.score-a.score;}).slice(0,3);
   var medals=["🥇","🥈","🥉"];
   var html='<div class="pp-reco-res"><div class="hint" style="margin:0 0 8px">推薦結果</div>';
@@ -2251,12 +2270,19 @@ async function ppRecommend(){
     html+='<p class="hint" style="margin:0">目前收錄的票券裡,沒有一張完整涵蓋這些地點,建議分開查詢或考慮 ICOCA 逐站付費。</p>';
   }else{
     scored.forEach(function(x,i){
+      var reasonRows=x.matched.map(function(m){
+        return '<div class="pp-why-row ok"><span>✓</span><div><b>'+esc(m.place)+'</b><br>'+esc(m.reason)+'</div></div>';
+      }).join("")+x.unmatched.map(function(pl){
+        return '<div class="pp-why-row no"><span>✗</span><div><b>'+esc(pl)+'</b><br>這張票券不含這個地點附近的路線</div></div>';
+      }).join("");
       html+='<div class="pp-reco-item'+(i===0?" top":"")+'"><span class="medal">'+medals[i]+'</span>'+
-        '<div><div class="nm">'+esc(x.pass.name)+' '+esc(x.pass.price)+'</div>'+
-        '<div class="why">涵蓋 '+x.matched.map(function(m){return esc(m.place)+(m.byArea?"(依地理位置估算)":"");}).join("、")+
-        (x.matched.length<resolved.length?"(其餘地點不在此票券範圍內)":"")+'</div></div></div>';
+        '<div style="flex:1;min-width:0"><div class="nm">'+esc(x.pass.name)+' '+esc(x.pass.price)+'</div>'+
+        '<div class="pp-why-list">'+reasonRows+'</div>'+
+        '<div class="pp-group" style="margin-top:8px">'+ppItemHtml(x.pass)+'</div>'+
+        '</div></div>';
     });
   }
+
   if(unresolved.length)html+='<p class="hint" style="margin:8px 0 0">查不到地點資料,建議手動確認:'+unresolved.map(esc).join("、")+'</p>';
   html+='<p class="hint" style="margin:8px 0 0">車站名稱比對較精確;依地理位置估算的地點,只比對到「城市/區域」層級,較粗略。未計入票價與天數,實際請以官方資訊為準。</p></div>';
   box.innerHTML=html;

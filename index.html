@@ -700,7 +700,7 @@ html[data-theme="light"] .q-n{color:var(--a-900);}
 
 <section class="page" id="page-metro">
   <div style="display:flex;align-items:center;">
-    <div class="mtabs" id="mCities" style="flex:1;"></div>
+    <div class="mtabs" id="mCities" style="flex:1;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>
     <button id="ppBtn" onclick="ppOpen()"><span>🎫</span><span>票券總覽</span></button>
   </div>
   <div class="section-label" style="margin:10px 12px 6px;" id="mPassLabel">依票券篩選路線</div>
@@ -716,6 +716,7 @@ html[data-theme="light"] .q-n{color:var(--a-900);}
       <input type="text" id="rpTo" placeholder="迄點(車站、餐廳、地址都可以)" style="margin-bottom:10px;" autocomplete="off">
       <button class="btn-primary" id="rpGo">用 Google 地圖規劃路線</button>
       <p class="hint" id="rpHint" style="margin:8px 0 0;"></p>
+      <div id="rpPassWarn"></div>
     </div>
   </div>
   <div class="mlyr" id="mLayers"></div>
@@ -2353,6 +2354,8 @@ $("rpGo").addEventListener("click",function(){
   var fromTxt=$("rpFrom").value.trim(),toTxt=$("rpTo").value.trim();
   if(!fromTxt||!toTxt){$("rpHint").textContent="請輸入起點和迄點。";return;}
   if(fromTxt===toTxt){$("rpHint").textContent="起點和迄點一樣,換一個試試。";return;}
+  $("rpHint").textContent="";
+  rpRenderPassWarn(fromTxt,toTxt);
   var u="https://www.google.com/maps/dir/?api=1&travelmode=transit";
   if(rpFromPlace&&rpFromPlace.place_id&&rpFromPlace.name===fromTxt)
     u+="&origin="+encodeURIComponent(fromTxt)+"&origin_place_id="+encodeURIComponent(rpFromPlace.place_id);
@@ -2362,6 +2365,45 @@ $("rpGo").addEventListener("click",function(){
   else u+="&destination="+encodeURIComponent(toTxt);
   window.open(u,"_blank");
 });
+function rpRenderPassWarn(fromTxt,toTxt){
+  var box=$("rpPassWarn");
+  if(mPass==="none"){box.innerHTML="";return;}
+  var fromHits=ppFindStationLines(fromTxt), toHits=ppFindStationLines(toTxt);
+  if(!fromHits.length||!toHits.length){
+    box.innerHTML='<p class="hint" style="margin:8px 0 0">目前選的「'+esc(PASS_DEFS[mPass].n)+
+      '」比對不到起點或迄點的車站資料,無法判斷是否涵蓋,建議直接看下面地圖的灰階區域。</p>';
+    return;
+  }
+  function anyOk(hits){return hits.some(function(s){return s.l.some(function(l){return mPassLineStatus(l)==="ok";});});}
+  var fromOk=anyOk(fromHits), toOk=anyOk(toHits);
+  if(fromOk&&toOk){
+    box.innerHTML='<p class="hint" style="margin:8px 0 0;color:var(--ok)">✓ 目前選的「'+esc(PASS_DEFS[mPass].n)+'」看起來有涵蓋起訖點附近的路線。</p>';
+    return;
+  }
+  var missing=[];
+  if(!fromOk)missing.push(fromTxt);
+  if(!toOk)missing.push(toTxt);
+  var alt=PASS_CATALOG.filter(function(p){return !p.excludeFromReco;}).map(function(p){
+    var coversFrom=fromHits.some(function(s){return s.l.some(function(l){return ppLineCovered(p.kind,l);});});
+    var coversTo=toHits.some(function(s){return s.l.some(function(l){return ppLineCovered(p.kind,l);});});
+    return {pass:p,score:(coversFrom?1:0)+(coversTo?1:0)};
+  }).filter(function(x){return x.score>0;}).sort(function(a,b){return b.score-a.score;}).slice(0,3);
+  var html='<div class="pp-reco" style="margin-top:8px;padding:12px">'+
+    '<p class="hint" style="margin:0 0 8px;color:var(--warn)">⚠ 目前選的「'+esc(PASS_DEFS[mPass].n)+
+    '」可能不含 '+missing.map(esc).join("、")+' 附近的路線。</p>';
+  if(alt.length){
+    html+='<p class="hint" style="margin:0 0 8px">比較適合這段路線的票券:</p>';
+    alt.forEach(function(x){
+      html+='<div class="pp-reco-item"><div style="flex:1"><div class="nm">'+esc(x.pass.name)+' '+esc(x.pass.price)+
+        '</div><div class="pp-why-row ok"><span>✓</span><div>'+
+        (x.score===2?"起訖點都在範圍內":"其中一端在範圍內,另一端請再確認")+'</div></div></div></div>';
+    });
+  }else{
+    html+='<p class="hint" style="margin:0">目前收錄的票券裡沒有完整涵蓋這段路線的,建議考慮 ICOCA 逐站付費。</p>';
+  }
+  html+='</div>';
+  box.innerHTML=html;
+}
 function mOpen(i){
   if(i<0||i>=mST.length)return;
   var s=mST[i];

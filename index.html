@@ -190,6 +190,7 @@ nav button.on{color:var(--accent); font-weight:700;}
 #mWrap{flex:1;position:relative;overflow:hidden;touch-action:none;background:#0b1119;min-height:220px;}
 #mMap{width:100%;height:100%;display:block;}
 #mRoot .dim{opacity:.13;}
+#mRoot .passOff{opacity:.4;filter:grayscale(1) brightness(.85);}
 .mctl{position:absolute;right:9px;bottom:10px;display:flex;flex-direction:column;gap:5px;}
 .mctl button{width:38px;height:38px;border-radius:11px;border:1px solid var(--border);
  background:rgba(20,29,43,.94);color:var(--text);font-size:17px;font-weight:700;padding:0;min-height:0;}
@@ -331,6 +332,9 @@ body.mFsOn #mWrap{position:fixed;inset:0;z-index:250;}
 .vDivider{width:1px;align-self:stretch;background:var(--stroke);margin:0 4px;flex-shrink:0;}
 #nearCtrl{flex-direction:column!important;}
 .distCircle.modeToggle.on{background:linear-gradient(135deg,var(--accent),var(--accent-dark));border:none;color:var(--on-accent);}
+#mPassRow{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
+#mPassRow::-webkit-scrollbar{display:none;height:0;}
+#mPassRow .chip{flex-shrink:0;}
 /* 車站高亮泡泡與四種 PASS 狀態徽章 */
 .mPickLabelBg{fill:var(--a-500);}
 .mPickLabelTxt{fill:#1E1204;font-weight:700;}
@@ -1845,22 +1849,33 @@ function mRenderPassChips(){
   });
 }
 function mApplyPassOverlay(){
-  var NS="http://www.w3.org/2000/svg";
-  var old=mRoot.querySelector("#passDyn"); if(old)old.remove();
+  mRoot.querySelectorAll(".passOff").forEach(function(e){e.classList.remove("passOff");});
   if(mPass==="none"){$("mPassNote").textContent=(PASS_BY_CITY[mCity]||[]).length>1?"選一張票券,不能搭的路線車站會變灰。":"";return;}
-  var g=document.createElementNS(NS,"g");g.id="passDyn";
-  var off=0;
-  mST.forEach(function(s){
-    if(mStationPassStatus(s)==="off"){
-      off++;
-      var c=document.createElementNS(NS,"circle");
-      c.setAttribute("cx",s.sx);c.setAttribute("cy",s.sy);c.setAttribute("r",10);
-      c.setAttribute("fill","var(--m-bg)");c.setAttribute("opacity",".78");
-      g.appendChild(c);
+  var d=METRO[mCity];
+  var polys=mRoot.querySelectorAll("polyline");
+  Object.keys(d.col).forEach(function(n){
+    if(mPassLineStatus(n)==="off"){
+      var col=d.col[n];
+      [].forEach.call(polys,function(e){
+        if(e.getAttribute("stroke")===col)e.classList.add("passOff");
+      });
     }
   });
-  mRoot.appendChild(g);
-  $("mPassNote").textContent=off?("灰色 = 這張 PASS 不含的車站,共 "+off+" 站(僅供參考,實際範圍請以票券官方資訊為準)"):"這張 PASS 涵蓋這張圖上的所有路線。";
+  var off=0;
+  mST.forEach(function(s,i){
+    if(mStationPassStatus(s)==="off"){
+      off++;
+      var hit=mRoot.querySelector('.hit[data-i="'+i+'"]');
+      if(!hit)return;
+      var cx=hit.getAttribute("cx"),cy=hit.getAttribute("cy");
+      mRoot.querySelectorAll("circle:not(.hit)").forEach(function(c){
+        if(c.getAttribute("cx")===cx&&c.getAttribute("cy")===cy)c.classList.add("passOff");});
+      mRoot.querySelectorAll("text").forEach(function(t){
+        if(Math.abs(parseFloat(t.getAttribute("x"))-cx)<32&&Math.abs(parseFloat(t.getAttribute("y"))-cy)<26)
+          t.classList.add("passOff");});
+    }
+  });
+  $("mPassNote").textContent=off?("灰色 = 這張 PASS 不含的路線與車站,共 "+off+" 站(僅供參考,實際範圍請以票券官方資訊為準)"):"這張 PASS 涵蓋這張圖上的所有路線。";
 }
 /* ================= 兩站間路線規劃:選起訖站後直接開 Google 地圖導航 ================= */
 function mFillRouteSelects(){

@@ -233,6 +233,59 @@ nav button.on{color:var(--accent); font-weight:700;}
 .mkv:last-child{border:none;}
 .mkv span:first-child{color:var(--muted);}
 
+/* ============ 票券總覽頁 ============ */
+#ppBtn{display:flex;align-items:center;gap:5px;flex-shrink:0;padding:0 12px;min-height:0;height:32px;
+  border-radius:999px;border:1px solid var(--a-line);background:var(--a-tint);color:var(--a-text);
+  font-size:12px;font-weight:700;white-space:nowrap;margin:8px 12px 6px 4px;}
+#passPage{position:fixed;inset:0;background:var(--surface);z-index:120;display:none;flex-direction:column;}
+#passPage.on{display:flex;}
+.pp-hd{display:flex;align-items:center;gap:10px;padding:14px 16px 8px;flex-shrink:0;}
+.pp-hd h2{font-size:17px;font-weight:900;margin:0;}
+.pp-back{border:1px solid var(--stroke);background:var(--glass2);color:var(--text2);
+  padding:7px 12px;min-height:0;border-radius:12px;font-size:12.5px;display:flex;align-items:center;gap:4px;}
+.pp-sub{font-size:12px;color:var(--muted);margin:0 16px 12px;}
+.pp-body{flex:1;overflow-y:auto;padding:0 16px 24px;-webkit-overflow-scrolling:touch;}
+.pp-cat{font-size:11.5px;color:var(--muted);font-weight:800;letter-spacing:1.2px;text-transform:uppercase;margin:16px 0 8px;}
+.pp-group{border:1px solid var(--stroke);border-radius:16px;overflow:hidden;background:var(--card);}
+.pp-item{border-bottom:1px solid var(--stroke);}
+.pp-item:last-child{border-bottom:none;}
+.pp-item summary{list-style:none;cursor:pointer;display:flex;gap:11px;align-items:center;padding:11px 12px;}
+.pp-item summary::-webkit-details-marker{display:none;}
+.pp-ic{width:44px;height:32px;border-radius:8px;background:var(--glass2);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:17px;}
+.pp-nm{font-size:13.5px;color:var(--text);line-height:1.4;}
+.pp-tag{display:inline-block;margin-top:4px;font-size:10.5px;padding:2px 8px;border-radius:999px;
+  background:var(--ok-bg);color:var(--ok);}
+.pp-item summary .pp-car{margin-left:auto;color:var(--muted);font-size:13px;transition:transform .15s;}
+.pp-item[open] summary .pp-car{transform:rotate(180deg);}
+.pp-detail{padding:0 12px 14px 67px;}
+.pp-detail p{font-size:12.5px;color:var(--text2);line-height:1.7;margin:0 0 10px;}
+.pp-warn{display:flex;gap:7px;align-items:center;padding:7px 9px;border-radius:10px;
+  background:var(--warn-bg);color:var(--warn);font-size:11.5px;margin:0 0 10px;}
+.pp-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:6px 12px;
+  border-radius:10px;border:1px solid var(--stroke);color:var(--text2);text-decoration:none;}
+.pp-reco{background:var(--card);border:1px solid var(--a-line);border-radius:18px;padding:14px;margin-bottom:8px;}
+.pp-reco-hd{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:800;margin-bottom:8px;}
+.pp-tags{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-radius:12px;
+  background:var(--glass2);border:1px solid var(--stroke);margin-bottom:10px;}
+.pp-place{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;
+  background:var(--ok-bg);color:var(--ok);font-size:12px;}
+.pp-place button{border:none;background:none;color:inherit;padding:0;min-height:0;font-size:12px;line-height:1;}
+.pp-tags input{flex:1;min-width:110px;border:none;background:none;font-size:12.5px;color:var(--text);padding:4px 2px;}
+.pp-tags input:focus{outline:none;}
+.pp-reco-row{display:flex;gap:10px;margin-bottom:10px;}
+.pp-reco-row .f{flex:1;}
+.pp-reco-row label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;}
+.pp-reco-row select,.pp-reco-row input{width:100%;padding:8px 10px;font-size:12.5px;}
+.pp-reco-res{margin-top:12px;padding-top:12px;border-top:1px solid var(--stroke);}
+.pp-reco-item{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:12px;
+  background:var(--glass2);margin-bottom:8px;}
+.pp-reco-item.top{border-left:3px solid var(--a-500);}
+.pp-reco-item .medal{font-size:16px;line-height:1;}
+.pp-reco-item .nm{font-size:13.5px;font-weight:700;}
+.pp-reco-item .why{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.6;}
+html[data-theme="light"] #passPage{background:var(--surface2);}
+
 /* ============ 主題變數:海藍深色 / 淺色白底,重點色琥珀金 ============ */
 :root,html[data-theme="dark"]{
   --g1:#1E4A72; --g2:#0E2439; --g3:#153756;
@@ -638,7 +691,10 @@ html[data-theme="light"] .q-n{color:var(--a-900);}
 </div>
 
 <section class="page" id="page-metro">
-  <div class="mtabs" id="mCities"></div>
+  <div style="display:flex;align-items:center;">
+    <div class="mtabs" id="mCities" style="flex:1;"></div>
+    <button id="ppBtn" onclick="ppOpen()"><span>🎫</span><span>票券總覽</span></button>
+  </div>
   <div class="section-label" style="margin:10px 12px 6px;" id="mPassLabel">依票券篩選路線</div>
   <div class="chips" id="mPassRow" style="margin:0 12px 4px;"></div>
   <p class="hint" id="mPassNote" style="margin:0 16px 10px;"></p>
@@ -677,6 +733,15 @@ html[data-theme="light"] .q-n{color:var(--a-900);}
   </div>
 </section>
 <div id="mModal"><div class="mbox" id="mBox"></div></div>
+
+<div id="passPage">
+  <div class="pp-hd">
+    <button class="pp-back" onclick="ppClose()">&larr; 返回地圖</button>
+    <h2>關西地區可使用的周遊票券一覽表</h2>
+  </div>
+  <p class="pp-sub" id="ppSub"></p>
+  <div class="pp-body" id="ppBody"></div>
+</div>
 
 <nav>
   <button class="on" data-p="list">
@@ -1555,11 +1620,11 @@ function showPreview(){
 }
 
 /* ================= 捷運圖 ================= */
-var mCity="台北", mST=[], mSc=1, mTx=0, mTy=0, mLine=null, mPos=null, mNearIdx=-1, mRecent=[];
+var mCity="大阪", mST=[], mSc=1, mTx=0, mTy=0, mLine=null, mPos=null, mNearIdx=-1, mRecent=[];
 var mSvg,mRoot,mWrap;
 function mInit(){
   mSvg=$("mMap"); mRoot=$("mRoot"); mWrap=$("mWrap");
-  $("mCities").innerHTML=Object.keys(METRO).map(function(c){
+  $("mCities").innerHTML=Object.keys(METRO).filter(function(c){return c!=="台北";}).map(function(c){
     return '<button data-c="'+c+'">'+c+'</button>';}).join("");
   $("mCities").querySelectorAll("button").forEach(function(b){
     b.onclick=function(){mLoad(b.dataset.c);};});
@@ -1579,7 +1644,7 @@ function mInit(){
   $("mQ").addEventListener("focus",mSearch);
   $("mModal").onclick=function(e){if(e.target===$("mModal"))mCloseModal();};
   mBindPan();
-  mLoad("台北");
+  mLoad("大阪");
 }
 function mLoad(c){
   mCity=c; var d=METRO[c]; mST=d.st; mLine=null; mNearIdx=-1;
@@ -1876,6 +1941,223 @@ function mApplyPassOverlay(){
     }
   });
   $("mPassNote").textContent=off?("灰色 = 這張 PASS 不含的路線與車站,共 "+off+" 站(僅供參考,實際範圍請以票券官方資訊為準)"):"這張 PASS 涵蓋這張圖上的所有路線。";
+}
+/* ================= 票券總覽頁(獨立於地圖篩選,涵蓋更廣的關西周遊券) ================= */
+var PASS_CATALOG=[
+ {id:"jr_kansai_1",cat:"JR系",name:"JR關西地區鐵路周遊券・1日券",region:"大阪・京都・神戶・姫路",price:"成人 ¥2,800",
+  url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansai/",
+  img:"https://www.westjr.co.jp/travel-information/tc/assets/img/tickets-passes/jrwest-rail-pass/kansai_map.jpg",
+  desc:"可自由搭乘大阪、京都、神戶、姫路一帶的JR普通・快速・新快速列車,含HARUKA指定席2次,不含新幹線。",kind:"jr"},
+ {id:"jr_kansai_2",cat:"JR系",name:"JR關西地區鐵路周遊券・2日券",region:"大阪・京都・神戶・姫路",price:"成人 ¥4,800",
+  url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansai/",
+  img:"https://www.westjr.co.jp/travel-information/tc/assets/img/tickets-passes/jrwest-rail-pass/kansai_map.jpg",
+  desc:"範圍與1日券相同,適合停留2天以上的行程。",kind:"jr"},
+ {id:"jr_kansai_3",cat:"JR系",name:"JR關西地區鐵路周遊券・3日券",region:"大阪・京都・神戶・姫路",price:"成人 ¥5,800",
+  url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansai/",
+  img:"https://www.westjr.co.jp/travel-information/tc/assets/img/tickets-passes/jrwest-rail-pass/kansai_map.jpg",
+  desc:"範圍與1日券相同,適合停留3天以上的行程。",kind:"jr"},
+ {id:"jr_kansai_4",cat:"JR系",name:"JR關西地區鐵路周遊券・4日券",region:"大阪・京都・神戶・姫路",price:"成人 ¥7,000",
+  url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansai/",
+  img:"https://www.westjr.co.jp/travel-information/tc/assets/img/tickets-passes/jrwest-rail-pass/kansai_map.jpg",
+  desc:"範圍與1日券相同,適合停留4天以上的行程。",kind:"jr"},
+ {id:"jr_wide_5",cat:"JR系",name:"JR關西廣域鐵路周遊券・5日券",region:"關西全域・岡山・鳥取・城崎",price:"成人 ¥12,000",
+  url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansai_wide/",
+  img:"https://www.westjr.co.jp/travel-information/tc/assets/img/tickets-passes/jrwest-rail-pass/kansai_wide_map.jpg",
+  desc:"涵蓋範圍比地區版更廣,含山陽新幹線新大阪⇔岡山指定席與HARUKA等特急列車。",kind:"jr",
+  note:"可延伸至岡山、鳥取、城崎,超出本圖範圍,詳見官方地圖"},
+ {id:"jr_mini",cat:"JR系",name:"JR關西迷你鐵路周遊券",region:"大阪・京都・難波・神戶・奈良",price:"價格請查官方頁",
+  url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansaimini/",
+  img:null,
+  desc:"範圍比地區版略小,主打大阪、京都、難波、神戶、奈良之間移動。",kind:"jr"},
+ {id:"jr_hiroshima",cat:"JR系",name:"JR關西&廣島地區鐵路周遊券",region:"關西・岡山・廣島",price:"價格請查官方頁",
+  url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansai_hiroshima/",
+  img:null,
+  desc:"關西加碼延伸到廣島、宮島一帶,含JR西日本宮島渡輪。",kind:"jr",
+  note:"可延伸至岡山、廣島,超出本圖範圍,詳見官方地圖"},
+ {id:"jr_sanin",cat:"JR系",name:"JR關西&山陰地區鐵路周遊券",region:"關西・城崎・鳥取",price:"價格請查官方頁",
+  url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansai_sanin/",
+  img:null,
+  desc:"關西加碼延伸到城崎溫泉、鳥取砂丘一帶的山陰地區。",kind:"jr",
+  note:"可延伸至城崎、鳥取,超出本圖範圍,詳見官方地圖"},
+ {id:"haruka",cat:"JR系",name:"HARUKA 單程優惠票",region:"關西機場↔大阪／京都",price:"價格依區間請查官方頁",
+  url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/oneway/haruka/",img:null,
+  desc:"關西機場往返大阪、京都的特急HARUKA單程優惠票,適合只需要機場接駁的旅客。",
+  kind:"single",excludeFromReco:true},
+ {id:"kintetsu",cat:"近鐵系",name:"近鐵電車周遊券(KINTETSU RAIL PASS 系列)",region:"大阪・奈良・伊勢・名古屋",
+  price:"依版本不同,請查官方頁",
+  url:"https://www.kintetsu.co.jp/foreign/chinese-han/ticket/",img:null,
+  desc:"近鐵電車全線周遊券,依範圍與天數分好幾種版本,適合會去奈良、伊勢志摩,甚至一路到名古屋的行程。",
+  kind:"kintetsu",note:"部分版本可延伸至伊勢、名古屋,超出本圖範圍"},
+ {id:"keihan_ko_1d",cat:"京阪系",name:"京都、大阪觀光一日券",region:"京都・大阪(京阪沿線)",price:"成人 ¥1,650",
+  url:"https://www.keihan.co.jp/travel/tw/trains/passes-for-visitors-to-japan/kyoto-osaka.html",
+  img:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-sightseeing-pass/img_specialsightseeingpass_pass_01.jpg",
+  desc:"京阪電車(大津線除外)、宇治線、交野線、石清水八幡宮參道纜車自由上下車。",kind:"keihan_main"},
+ {id:"keihan_ko_24h",cat:"京阪系",name:"京都、大阪觀光24小時券",region:"京都・大阪(京阪沿線)",price:"成人 ¥1,850",
+  url:"https://www.keihan.co.jp/travel/tw/trains/passes-for-visitors-to-japan/kyoto-osaka.html",
+  img:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-sightseeing-pass/img_specialsightseeingpass_pass_01.jpg",
+  desc:"範圍與一日券相同,從啟用時刻起算24小時內有效,彈性較高。",kind:"keihan_main"},
+ {id:"keihan_k_1d",cat:"京阪系",name:"京都觀光一日券",region:"京都(京阪沿線)",price:"成人 ¥1,100",
+  url:"https://www.keihan.co.jp/travel/tw/trains/passes-for-visitors-to-japan/kyoto-osaka.html",
+  img:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-sightseeing-pass/img_specialsightseeingpass_pass_02.jpg",
+  desc:"京都市內京阪電車路段自由上下車,範圍比大阪版小,價格也較低。",kind:"keihan_main"},
+ {id:"keihan_k_24h",cat:"京阪系",name:"京都觀光24小時券",region:"京都(京阪沿線)",price:"成人 ¥1,300",
+  url:"https://www.keihan.co.jp/travel/tw/trains/passes-for-visitors-to-japan/kyoto-osaka.html",
+  img:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-sightseeing-pass/img_specialsightseeingpass_pass_02.jpg",
+  desc:"範圍與京都一日券相同,24小時制。",kind:"keihan_main"},
+ {id:"keihan_osaka_metro",cat:"京阪系",name:"京阪+Osaka Metro觀光乘車券・一日券",region:"京都(京阪)・大阪地鐵",
+  price:"成人 ¥2,160",
+  url:"https://www.keihan.co.jp/travel/tw/trains/passes-for-visitors-to-japan/osaka-subway.html",
+  img:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-osaka/img_specialsightseeingpass_pass.jpg",
+  desc:"京阪電車再加碼大阪地鐵(Osaka Metro)與市巴士(部分路線除外)全線自由搭乘。",kind:"keihan_osaka"},
+ {id:"keihan_eizan",cat:"京阪系",name:"京都、大阪觀光乘車券(鞍馬&貴船地區擴大版)・一日券",region:"京都北部(鞍馬・貴船)",
+  price:"成人 ¥2,100",
+  url:"https://www.keihan.co.jp/travel/tw/trains/passes-for-visitors-to-japan/eizan-railway.html",
+  img:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-eizan-railway/img_special_eizanrailway_pass.jpg",
+  desc:"京阪電車再加碼叡山電車,可以到京都北部的鞍馬、貴船神社一帶。",kind:"keihan_eizan"},
+ {id:"krp_lite_2d",cat:"私鐵地鐵周遊券系",name:"KANSAI RAILWAY PASS LITE・2日券",
+  region:"大阪・京都・奈良・神戶/姫路・和歌山",price:"成人 ¥5,200",
+  url:"https://www.surutto.com/kansai_rwpl/zh-TW/krp.html",
+  img:"https://www.surutto.com/kansai_rwpl/assets/images/areamap_tw.jpg",
+  desc:"舊稱 KANSAI THRU PASS。關西各地地下鐵、私鐵幾乎都能搭,但不含JR、京都市營地下鐵、京阪大津線、嵐電與公車。",
+  kind:"krplite"},
+ {id:"krp_lite_3d",cat:"私鐵地鐵周遊券系",name:"KANSAI RAILWAY PASS LITE・3日券",
+  region:"大阪・京都・奈良・神戶/姫路・和歌山",price:"成人 ¥6,500",
+  url:"https://www.surutto.com/kansai_rwpl/zh-TW/krp.html",
+  img:"https://www.surutto.com/kansai_rwpl/assets/images/areamap_tw.jpg",
+  desc:"範圍與2日券相同,多一天可用。",kind:"krplite"},
+ {id:"osaka_amazing",cat:"特定城市周遊票系",name:"Osaka Amazing Pass",region:"大阪市區(含私鐵短程段)",
+  price:"依1日／2日版本,請查官方頁",
+  url:"https://osaka-amazing-pass.com/cht/",img:null,
+  desc:"大阪地鐵、市巴士全線自由搭乘,加上大阪市區內的阪急、阪神、京阪、近鐵、南海路段,還能免費進約40個景點設施。",
+  kind:"osaka_amazing"}
+];
+var PP_OSAKA_METRO_LINES=["御堂筋線","中央線","堺筋線","谷町線","四つ橋線","千日前線","長堀鶴見緑地線"];
+function ppLineCovered(passKind,lineName){
+  var isJR=lineName.indexOf("JR")===0;
+  var isKintetsu=lineName.indexOf("近鉄")===0;
+  switch(passKind){
+    case "jr": return isJR;
+    case "kintetsu": return isKintetsu;
+    case "keihan_main": return lineName==="京阪本線";
+    case "keihan_osaka": return lineName==="京阪本線"||PP_OSAKA_METRO_LINES.indexOf(lineName)>=0;
+    case "keihan_eizan": return lineName==="京阪本線"||lineName==="叡山電車";
+    case "krplite":
+      if(isJR)return false;
+      if(lineName==="烏丸線"||lineName==="東西線")return false;
+      if(lineName==="嵐電(京福電鐵)")return false;
+      return true;
+    case "osaka_amazing":
+      return PP_OSAKA_METRO_LINES.indexOf(lineName)>=0||lineName==="京阪本線"||isKintetsu||
+        lineName.indexOf("阪急")>=0||lineName.indexOf("阪神")>=0||lineName.indexOf("南海")>=0;
+  }
+  return false;
+}
+function ppOpen(){
+  ppRender();
+  $("passPage").classList.add("on");
+}
+function ppClose(){$("passPage").classList.remove("on");}
+function ppRender(){
+  $("ppSub").textContent="共 "+PASS_CATALOG.length+" 張,依系統分類。點卡片展開說明,點官方頁前往購票資訊。價格為成人價,實際請以官網公告為準。";
+  var cats=[];
+  PASS_CATALOG.forEach(function(p){if(cats.indexOf(p.cat)<0)cats.push(p.cat);});
+  var html=ppRecoHtml();
+  cats.forEach(function(cat){
+    html+='<div class="pp-cat">'+esc(cat)+'</div><div class="pp-group">'+
+      PASS_CATALOG.filter(function(p){return p.cat===cat;}).map(ppItemHtml).join("")+'</div>';
+  });
+  $("ppBody").innerHTML=html;
+  ppBindReco();
+}
+function ppItemHtml(p){
+  return '<details class="pp-item"><summary>'+
+    '<div class="pp-ic">🎫</div>'+
+    '<div style="flex:1;min-width:0"><div class="pp-nm">'+esc(p.name)+'</div>'+
+    '<span class="pp-tag">'+esc(p.region)+'</span></div>'+
+    '<span style="font-size:12.5px;font-weight:700;color:var(--a-text);white-space:nowrap;margin-left:8px">'+esc(p.price)+'</span>'+
+    '<span class="pp-car">⌄</span></summary>'+
+    '<div class="pp-detail">'+
+    (p.img?'<img src="'+p.img+'" alt="'+esc(p.name)+' 官方區域地圖" style="width:100%;border-radius:12px;display:block;margin:10px 0" />':'')+
+    '<p>'+esc(p.desc)+'</p>'+
+    (p.note?'<div class="pp-warn">⚠ '+esc(p.note)+'</div>':'')+
+    '<a class="pp-link" href="'+p.url+'" target="_blank" rel="noopener">前往官方頁 ↗</a></div></details>';
+}
+function ppRecoHtml(){
+  return '<div class="pp-reco">'+
+    '<div class="pp-reco-hd">✨ 依你的行程推薦票券</div>'+
+    '<p class="hint" style="margin:0 0 8px">輸入想去的地點(一個地點一個欄位),幫你比對最適合的票券(僅比對本圖收錄的大阪／京都／關西全域車站資料,無法涵蓋所有景點)</p>'+
+    '<div id="ppPlaceList">'+
+      '<input type="text" class="pp-place-input" placeholder="地點 1">'+
+      '<input type="text" class="pp-place-input" placeholder="地點 2">'+
+      '<input type="text" class="pp-place-input" placeholder="地點 3">'+
+    '</div>'+
+    '<button type="button" id="ppAddPlace" style="width:100%;margin:4px 0 10px;border-style:dashed">＋ 新增地點</button>'+
+    '<div class="pp-reco-row">'+
+      '<div class="f"><label>天數</label><input type="text" id="ppDays" placeholder="例如 2 天"></div>'+
+    '</div>'+
+    '<button class="btn-primary" style="width:100%" onclick="ppRecommend()">推薦適合的票券</button>'+
+    '<div id="ppRecoRes"></div></div>';
+}
+function ppBindReco(){
+  var addBtn=$("ppAddPlace");
+  if(!addBtn)return;
+  addBtn.onclick=function(){
+    var list=$("ppPlaceList");
+    var n=list.querySelectorAll(".pp-place-input").length+1;
+    var inp=document.createElement("input");
+    inp.type="text";inp.className="pp-place-input";inp.placeholder="地點 "+n;
+    inp.style.marginTop="8px";
+    list.appendChild(inp);
+  };
+}
+function ppFindStationLines(name){
+  var cities=["大阪","京都","關西全域"],found=[];
+  cities.forEach(function(c){
+    var d=METRO[c]; if(!d)return;
+    d.st.forEach(function(s){
+      if(s.n.indexOf(name)>=0||name.indexOf(s.n)>=0)found.push(s);
+    });
+  });
+  return found;
+}
+function ppRecommend(){
+  var box=$("ppRecoRes");
+  var places=[].slice.call(document.querySelectorAll(".pp-place-input"))
+    .map(function(i){return i.value.trim();}).filter(function(v){return v;});
+  if(!places.length){box.innerHTML='<p class="hint" style="margin:10px 0 0">先輸入至少一個地點再推薦。</p>';return;}
+  var unresolved=[],resolved=[];
+  places.forEach(function(pl){
+    var hits=ppFindStationLines(pl);
+    if(!hits.length){unresolved.push(pl);return;}
+    var lines=[];
+    hits.forEach(function(s){s.l.forEach(function(l){if(lines.indexOf(l)<0)lines.push(l);});});
+    resolved.push({place:pl,lines:lines});
+  });
+  if(!resolved.length){
+    box.innerHTML='<div class="pp-reco-res"><p class="hint" style="margin:0">這幾個地點都不在本圖收錄的車站資料裡,無法自動判斷,建議直接查各票券官方頁確認範圍。</p></div>';
+    return;
+  }
+  var scored=PASS_CATALOG.filter(function(p){return !p.excludeFromReco;}).map(function(p){
+    var matched=resolved.filter(function(r){
+      return r.lines.some(function(l){return ppLineCovered(p.kind,l);});
+    });
+    return {pass:p,matched:matched,score:matched.length};
+  }).filter(function(x){return x.score>0;}).sort(function(a,b){return b.score-a.score;}).slice(0,3);
+  var medals=["🥇","🥈","🥉"];
+  var html='<div class="pp-reco-res"><div class="hint" style="margin:0 0 8px">推薦結果</div>';
+  if(!scored.length){
+    html+='<p class="hint" style="margin:0">目前收錄的票券裡,沒有一張完整涵蓋這些地點,建議分開查詢或考慮 ICOCA 逐站付費。</p>';
+  }else{
+    scored.forEach(function(x,i){
+      html+='<div class="pp-reco-item'+(i===0?" top":"")+'"><span class="medal">'+medals[i]+'</span>'+
+        '<div><div class="nm">'+esc(x.pass.name)+' '+esc(x.pass.price)+'</div>'+
+        '<div class="why">涵蓋 '+x.matched.map(function(m){return esc(m.place);}).join("、")+
+        (x.matched.length<resolved.length?"(其餘地點不在此票券範圍內)":"")+'</div></div></div>';
+    });
+  }
+  if(unresolved.length)html+='<p class="hint" style="margin:8px 0 0">查不到車站資料,建議手動確認:'+unresolved.map(esc).join("、")+'</p>';
+  html+='<p class="hint" style="margin:8px 0 0">比對僅依路線涵蓋範圍粗略判斷,未計入票價與天數,實際請以官方資訊為準。</p></div>';
+  box.innerHTML=html;
 }
 /* ================= 兩站間路線規劃:選起訖站後直接開 Google 地圖導航 ================= */
 function mFillRouteSelects(){

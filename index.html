@@ -846,6 +846,7 @@ function gmapsReady(){
   gmapsLoaded=true;gmapsLoading=false;
   gmapsGeocoder=new google.maps.Geocoder();
   rpInitAutocomplete();
+  if($("rpHint"))$("rpHint").textContent="";
 }
 function ensureGoogleMapsLoaded(){
   if(gmapsLoaded||gmapsLoading)return;
@@ -2246,9 +2247,7 @@ async function ppRecommend(){
     var pl=places[idx];
     var hits=ppFindStationLines(pl);
     if(hits.length){
-      var lines=[];
-      hits.forEach(function(s){s.l.forEach(function(l){if(lines.indexOf(l)<0)lines.push(l);});});
-      resolved.push({place:pl,lines:lines,kind:"station"});
+      resolved.push({place:pl,hits:hits,kind:"station"});
       continue;
     }
     var geo=await ppGeocode(pl+", 日本");
@@ -2274,18 +2273,37 @@ async function ppRecommend(){
   var scored=PASS_CATALOG.filter(function(p){return !p.excludeFromReco;}).map(function(p){
     var matched=[],unmatched=[];
     resolved.forEach(function(r){
-      if(r.kind==="station"||r.kind==="near"){
+      if(r.kind==="station"){
+        var hitLine=null,hitStation=null;
+        for(var hi=0;hi<r.hits.length;hi++){
+          var s2=r.hits[hi];
+          var l2=s2.l.filter(function(l){return ppLineCovered(p.kind,l);})[0];
+          if(l2){hitLine=l2;hitStation=s2;break;}
+        }
+        if(hitLine){
+          var dupNote=r.hits.length>1
+            ? "(「"+r.place+"」在地圖上有 "+r.hits.length+" 個同名車站:"+
+              r.hits.map(function(s3){return s3.l.join("/");}).join("、")+
+              ",這張票只涵蓋「"+hitLine+"」那一個,不是其他同名車站,請注意實際位置可能有落差)"
+            : "";
+          matched.push({place:r.place,reason:"車站在「"+hitLine+"」,這張票券有涵蓋這條路線"+dupNote});
+        }else{
+          var noCoverNote=r.hits.length>1
+            ?"這個地名對應的 "+r.hits.length+" 個同名車站(分別在"+
+             r.hits.map(function(s3){return s3.l.join("/");}).join("、")+")都不在這張票券範圍內"
+            :"這張票券不含這個地點附近的路線";
+          unmatched.push({place:r.place,note:noCoverNote});
+        }
+      }else if(r.kind==="near"){
         var line=r.lines.filter(function(l){return ppLineCovered(p.kind,l);})[0];
         if(line){
-          var reason=r.kind==="station"
-            ? "車站在「"+line+"」,這張票券有涵蓋這條路線"
-            : "離「"+r.stationName+"」站約 "+distTxt(r.dist)+",這站在「"+line+"」,這張票券有涵蓋這條路線";
-          matched.push({place:r.place,reason:reason});
-        }else unmatched.push(r.place);
+          matched.push({place:r.place,reason:"離「"+r.stationName+"」站約 "+distTxt(r.dist)+
+            ",這站在「"+line+"」,這張票券有涵蓋這條路線"});
+        }else unmatched.push({place:r.place,note:"這張票券不含這個地點附近的路線"});
       }else{
         var kw=ppAreaMatchKeyword(r.geo,PASS_AREA_KEYWORDS[p.id]||[]);
         if(kw)matched.push({place:r.place,reason:"地理位置估算落在「"+kw+"」一帶,這張票券的範圍有包含(依地理位置估算,較粗略)"});
-        else unmatched.push(r.place);
+        else unmatched.push({place:r.place,note:"這張票券不含這個地點附近的路線"});
       }
     });
     return {pass:p,matched:matched,unmatched:unmatched,score:matched.length};
@@ -2298,8 +2316,8 @@ async function ppRecommend(){
     scored.forEach(function(x,i){
       var reasonRows=x.matched.map(function(m){
         return '<div class="pp-why-row ok"><span>✓</span><div><b>'+esc(m.place)+'</b><br>'+esc(m.reason)+'</div></div>';
-      }).join("")+x.unmatched.map(function(pl){
-        return '<div class="pp-why-row no"><span>✗</span><div><b>'+esc(pl)+'</b><br>這張票券不含這個地點附近的路線</div></div>';
+      }).join("")+x.unmatched.map(function(u){
+        return '<div class="pp-why-row no"><span>✗</span><div><b>'+esc(u.place)+'</b><br>'+esc(u.note)+'</div></div>';
       }).join("");
       html+='<div class="pp-reco-item'+(i===0?" top":"")+'"><span class="medal">'+medals[i]+'</span>'+
         '<div style="flex:1;min-width:0"><div class="nm">'+esc(x.pass.name)+' '+esc(x.pass.price)+'</div>'+

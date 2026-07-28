@@ -2176,18 +2176,23 @@ var LANDMARK_ALIAS={
 };
 function ppResolveName(name){
   if(LANDMARK_ALIAS[name])return LANDMARK_ALIAS[name];
-  for(var k in LANDMARK_ALIAS){if(name.indexOf(k)>=0||k.indexOf(name)>=0)return LANDMARK_ALIAS[k];}
-  return name;
+  for(var k in LANDMARK_ALIAS){if(name.indexOf(k)>=0)return LANDMARK_ALIAS[k];}
+  return null;
+}
+function ppStationMatch(city,name){
+  var d=METRO[city]; if(!d)return [];
+  var exact=d.st.filter(function(s){return s.n===name;});
+  if(exact.length)return exact;
+  return d.st.filter(function(s){return s.n.indexOf(name)>=0||name.indexOf(s.n)>=0;});
 }
 function ppFindStationLines(rawName){
-  var name=ppResolveName(rawName);
   var cities=["大阪","京都","關西全域"],found=[];
-  cities.forEach(function(c){
-    var d=METRO[c]; if(!d)return;
-    d.st.forEach(function(s){
-      if(s.n.indexOf(name)>=0||name.indexOf(s.n)>=0)found.push(s);
-    });
-  });
+  cities.forEach(function(c){found=found.concat(ppStationMatch(c,rawName));});
+  if(found.length)return found;
+  var alias=ppResolveName(rawName);
+  if(alias){
+    cities.forEach(function(c){found=found.concat(ppStationMatch(c,alias));});
+  }
   return found;
 }
 var ppGeoCacheKey="ppGeoCache_v1";
@@ -2372,11 +2377,14 @@ function rpBuildGraph(city){
 }
 function rpResolveInCity(city,name){
   var d=METRO[city]; if(!d)return null;
-  var query=ppResolveName(name);
-  var hit=d.st.find(function(s){return s.n===query;});
-  if(hit)return hit.n;
-  var hits=d.st.filter(function(s){return s.n.indexOf(query)>=0||query.indexOf(s.n)>=0;});
-  return hits.length?hits[0].n:null;
+  var direct=ppStationMatch(city,name);
+  if(direct.length)return direct[0].n;
+  var alias=ppResolveName(name);
+  if(alias){
+    var hits=ppStationMatch(city,alias);
+    if(hits.length)return hits[0].n;
+  }
+  return null;
 }
 function rpFindCommonCity(fromTxt,toTxt){
   var order=[mCity,"大阪","京都","關西全域"].filter(function(c,i,a){return a.indexOf(c)===i;});
@@ -2418,31 +2426,37 @@ function rpAllowedLines(){
 }
 function rpPlanRoute(fromTxt,toTxt){
   var box=$("rpPassWarn");
-  var found=rpFindCommonCity(fromTxt,toTxt);
-  if(!found){
-    box.innerHTML='<p class="hint" style="margin:8px 0 0">起訖點不在本圖收錄的車站範圍內(或跨越不同圖的範圍),無法用我們的路網算路徑,改用 Google 地圖規劃。</p>';
+  try{
+    var found=rpFindCommonCity(fromTxt,toTxt);
+    if(!found){
+      box.innerHTML='<p class="hint" style="margin:8px 0 0">起訖點不在本圖收錄的車站範圍內(或跨越不同圖的範圍),無法用我們的路網算路徑,改用 Google 地圖規劃。</p>';
+      rpOpenGoogleMaps(fromTxt,toTxt);
+      return;
+    }
+    if(found.city!==mCity)mLoad(found.city);
+    var allowed=rpAllowedLines();
+    var path=rpBFS(found.city,found.from,found.to,allowed);
+    var full=allowed?rpBFS(found.city,found.from,found.to,null):path;
+    rpClearPathOnMap();
+    if(path){
+      rpRenderPathResult(path,true,null);
+      rpDrawPathOnMap(found.city,path);
+    }else if(full){
+      var blockIdx=full.findIndex(function(step,i){return i>0&&allowed.indexOf(step.lineFromPrev)<0;});
+      rpRenderPathResult(full,false,blockIdx);
+      rpDrawPathOnMap(found.city,full,blockIdx);
+    }else{
+      box.innerHTML='<p class="hint" style="margin:8px 0 0">在本圖的路網裡找不到「'+esc(fromTxt)+'」到「'+esc(toTxt)+'」的路徑(可能中間有資料沒收錄到),改用 Google 地圖規劃。</p>';
+      rpOpenGoogleMaps(fromTxt,toTxt);
+      return;
+    }
+    $("rpOpenGmapBtn").style.display="inline-flex";
+    $("rpOpenGmapBtn").onclick=function(){rpOpenGoogleMaps(fromTxt,toTxt);};
+  }catch(err){
+    console.error("rpPlanRoute error:",err);
+    box.innerHTML='<p class="hint" style="margin:8px 0 0">路徑規劃時發生問題,改用 Google 地圖規劃。</p>';
     rpOpenGoogleMaps(fromTxt,toTxt);
-    return;
   }
-  if(found.city!==mCity)mLoad(found.city);
-  var allowed=rpAllowedLines();
-  var path=rpBFS(found.city,found.from,found.to,allowed);
-  var full=allowed?rpBFS(found.city,found.from,found.to,null):path;
-  rpClearPathOnMap();
-  if(path){
-    rpRenderPathResult(path,true,null);
-    rpDrawPathOnMap(found.city,path);
-  }else if(full){
-    var blockIdx=full.findIndex(function(step,i){return i>0&&allowed.indexOf(step.lineFromPrev)<0;});
-    rpRenderPathResult(full,false,blockIdx);
-    rpDrawPathOnMap(found.city,full,blockIdx);
-  }else{
-    box.innerHTML='<p class="hint" style="margin:8px 0 0">在本圖的路網裡找不到「'+esc(fromTxt)+'」到「'+esc(toTxt)+'」的路徑(可能中間有資料沒收錄到),改用 Google 地圖規劃。</p>';
-    rpOpenGoogleMaps(fromTxt,toTxt);
-    return;
-  }
-  $("rpOpenGmapBtn").style.display="inline-flex";
-  $("rpOpenGmapBtn").onclick=function(){rpOpenGoogleMaps(fromTxt,toTxt);};
 }
 function rpRenderPathResult(path,ok,blockIdx){
   var box=$("rpPassWarn");

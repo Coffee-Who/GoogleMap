@@ -84,7 +84,10 @@ button:active{transform:scale(.98);}
   background:var(--card2); color:var(--text2); min-height:0; white-space:nowrap; flex:none;
 }
 .chip.on{background:var(--accent); color:var(--on-accent); font-weight:700;}
-.place{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:var(--radius); padding:13px 15px; margin-bottom:9px;}
+.place{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:var(--radius); padding:11px 13px; margin-bottom:9px; display:flex; gap:11px; align-items:flex-start;}
+.place-thumb{width:60px; height:60px; border-radius:12px; flex-shrink:0; background:var(--card2); display:flex; align-items:center; justify-content:center; color:var(--muted); overflow:hidden;}
+.place-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+.place-body{flex:1; min-width:0;}
 .place .top{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
 .place .name{font-size:16px; font-weight:700;}
 .badge{font-size:11px; font-weight:600; padding:2px 8px; border-radius:6px; white-space:nowrap;}
@@ -1065,7 +1068,8 @@ var IC={
   edit:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
   star:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 21l1.1-6.5L2.6 9.8l6.5-.9z"/></svg>',
   ext:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>',
-  walk:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="M10.5 21l2-5-3-3 1-5 4 2 2 2"/><path d="M7 21l2.5-6"/></svg>'
+  walk:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="M10.5 21l2-5-3-3 1-5 4 2 2 2"/><path d="M7 21l2.5-6"/></svg>',
+  img:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 15l-5-5-9 9"/></svg>'
 };
 /* ================= 資料層(格式與舊版相同) ================= */
 var LS_P="pocket_places_v1", LS_C="pocket_cats_v1", LS_L="pocket_lists_v1";
@@ -1132,6 +1136,11 @@ var BADGE_COLORS={"咖啡":"#b48ef2","美食":"#f28b6b","景點":"#7db8f2","購�
 function catBadge(c){
   var col=BADGE_COLORS[c]||"#8fa0b8";
   return '<span class="badge" style="color:'+col+';background:'+col+'1f;">'+esc(c)+'</span>';
+}
+function placeThumb(x){
+  if(x.photoUrl)return '<div class="place-thumb" data-tid="'+attr(x.id)+'"><img src="'+attr(x.photoUrl)+'" alt="" loading="lazy"></div>';
+  var col=BADGE_COLORS[x.cat]||"#8fa0b8";
+  return '<div class="place-thumb" data-tid="'+attr(x.id)+'" style="color:'+col+';background:'+col+'1f;">'+IC.img+'</div>';
 }
 
 /* ================= 分頁切換 ================= */
@@ -1250,7 +1259,7 @@ function renderList(){
   $("pendCount").textContent=pend.length?" — "+pend.length:"";
   $("hdCount").textContent=places.length?places.length+" SAVED · "+places.filter(function(x){return !x.done;}).length+" PENDING":"開始收集你的口袋景點";
   $("pendList").innerHTML=pend.length?pend.map(function(x){
-    return '<div class="place">'+
+    return '<div class="place">'+placeThumb(x)+'<div class="place-body">'+
     '<div class="top"><span class="name">'+esc(x.name)+'</span>'+catBadge(x.cat)+
     '<span class="list-tag">'+esc(x.list)+'</span>'+
     '<button class="btn-icon" data-del="'+attr(x.id)+'" aria-label="刪除">'+IC.trash+'</button></div>'+
@@ -1258,7 +1267,7 @@ function renderList(){
     '<div class="actions">'+
     '<button class="btn-act map" data-map="'+attr(x.name)+'">'+IC.pin+'開地圖</button>'+
     '<button class="btn-act done-mark" data-done="'+attr(x.id)+'">'+IC.check+'已加入</button>'+
-    '</div></div>';
+    '</div></div></div>';
   }).join(""):'<p class="empty">目前沒有符合的待加入景點,按右下角「＋」新增一個吧。</p>';
   $("doneToggleTxt").textContent="已加入地圖 "+done.length+" 個";
   $("doneChev").style.transform=doneOpen?"rotate(180deg)":"";
@@ -1272,6 +1281,7 @@ function renderList(){
     '</div></div>';
   }).join(""):'<p class="empty">還沒有標記已加入的景點。</p>';
   bindListActions($("pendList"));bindListActions($("doneList"));
+  queuePlacePhotos();
 }
 $("doneToggle").addEventListener("click",function(){doneOpen=!doneOpen;renderList();});
 function bindListActions(root){
@@ -3755,6 +3765,60 @@ function googleNearby(radius,cb,err){
     }).filter(Boolean).sort(function(a,b){return a.d-b.d;});
     cb(rows);
   }).catch(function(e){err(e.message||"error");});
+}
+function googlePlacePhoto(name,hint,cb,err){
+  var key=gKey();
+  if(!key)return err("no-key");
+  var u=gUsage(), cap=gCap();
+  if(cap>0 && u.dn>=cap)return err("cap:"+cap);
+  var mask="places.id,places.photos";
+  fetch("https://places.googleapis.com/v1/places:searchText",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","X-Goog-Api-Key":key,"X-Goog-FieldMask":mask},
+    body:JSON.stringify({textQuery:name+(hint?(" "+hint):""), maxResultCount:1, languageCode:"zh-TW"})
+  }).then(function(r){
+    if(!r.ok)return r.json().then(function(j){throw new Error((j.error&&j.error.message)||("HTTP "+r.status));});
+    return r.json();
+  }).then(function(js){
+    gBump();
+    var p=(js.places||[])[0];
+    if(!p){cb(null);return;}
+    var photoName=p.photos&&p.photos[0]&&p.photos[0].name;
+    var url=photoName?("https://places.googleapis.com/v1/"+photoName+"/media?maxWidthPx=300&key="+encodeURIComponent(key)):null;
+    cb({placeId:p.id||null, photoUrl:url});
+  }).catch(function(e){err(e.message||"error");});
+}
+/* 背景排隊抓景點縮圖:一次一個,避免瞬間打爆額度;失敗或無金鑰就靜靜跳過 */
+var photoQueueBusy=false;
+function queuePlacePhotos(){
+  if(photoQueueBusy)return;
+  if(!gKey())return;
+  var target=places.filter(function(p){return !p.done && !p.photoUrl && !p.photoAt;})[0];
+  if(!target)return;
+  photoQueueBusy=true;
+  googlePlacePhoto(target.name, target.list||"", function(res){
+    target.photoAt=Date.now();
+    if(res){
+      if(res.placeId)target.placeId=res.placeId;
+      if(res.photoUrl)target.photoUrl=res.photoUrl;
+    }
+    save();
+    patchThumbDom(target);
+    photoQueueBusy=false;
+    setTimeout(queuePlacePhotos,400);
+  }, function(e){
+    photoQueueBusy=false;
+    if(String(e).indexOf("cap:")===0)return; /* 額度用完,今天先停,不標記已嘗試,明天會再排 */
+    target.photoAt=Date.now(); /* 其他錯誤(找不到景點等)標記已嘗試,避免每次都重打 */
+    save();
+    setTimeout(queuePlacePhotos,400);
+  });
+}
+function patchThumbDom(x){
+  var el=document.querySelector('.place-thumb[data-tid="'+x.id+'"]');
+  if(!el||!x.photoUrl)return;
+  el.style.background=""; el.style.color="";
+  el.innerHTML='<img src="'+attr(x.photoUrl)+'" alt="" loading="lazy">';
 }
 function googleTextSearch(query,radius,cb,err){
   var key=gKey();

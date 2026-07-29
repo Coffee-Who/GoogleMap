@@ -21,7 +21,6 @@ body{
   background:var(--bg); color:var(--text); font-size:16px; line-height:1.55;
   padding-bottom:calc(74px + env(safe-area-inset-bottom));
 }
-body.hasRouteStrip{padding-bottom:calc(74px + 66px + env(safe-area-inset-bottom));}
 a{color:var(--accent);} a:hover{color:var(--accent-dark);}
 svg{display:block; flex-shrink:0;}
 header{
@@ -129,22 +128,30 @@ button:active{transform:scale(.98);}
 .leg.ok2 .num{background:var(--ok-bg); color:var(--ok);}
 .leg.ok2{color:var(--muted);}
 .leg .t{flex:1; overflow:hidden; text-overflow:ellipsis;}
-.routeStrip{
-  position:fixed; left:0; right:0; bottom:calc(58px + env(safe-area-inset-bottom)); z-index:19;
-  background:var(--card); border-top:1px solid var(--border);
-  padding:10px 12px calc(8px + env(safe-area-inset-bottom,0px)); display:none;
-  backdrop-filter:blur(var(--blur)); -webkit-backdrop-filter:blur(var(--blur));
-}
-.routeStrip.show{display:block;}
-.rs-daylabel{font-size:11.5px; font-weight:800; color:var(--accent); margin:0 0 6px;}
-.rs-scroll{display:flex; align-items:flex-start; overflow-x:auto; -webkit-overflow-scrolling:touch;}
-.rs-scroll::-webkit-scrollbar{display:none; height:0;}
-.rs-pt{display:flex; flex-direction:column; align-items:center; flex-shrink:0; width:58px;}
-.rs-num{width:26px; height:26px; border-radius:50%; background:var(--accent); color:var(--on-accent); font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
-.rs-num.rs-cur{background:transparent; border:2px dashed var(--accent); color:var(--accent); font-size:10px;}
-.rs-nm{font-size:11px; color:var(--text2); margin-top:4px; text-align:center; line-height:1.2; max-width:56px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.rs-leg2{display:flex; flex-direction:column; align-items:center; flex-shrink:0; min-width:44px; padding-top:3px; font-size:10.5px; color:var(--muted); white-space:nowrap;}
-.rs-leg2 .ic{font-size:13px; line-height:1;}
+.dlbl{display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none;}
+#dayLabelChev{font-size:13px; color:var(--muted); transition:transform .15s;}
+.legrow{display:flex; align-items:center; gap:7px; padding:4px 4px 8px 30px; color:var(--muted); font-size:11.5px;}
+.legrow .ic{font-size:13px; line-height:1;}
+.stop2{position:relative; margin:0 0 6px 13px;}
+.stop2:last-child{margin-bottom:0;}
+.stop2 .num2{position:absolute; left:-13px; top:12px; width:26px; height:26px; border-radius:50%;
+  background:var(--accent); color:var(--on-accent); font-size:12px; font-weight:800;
+  display:flex; align-items:center; justify-content:center; z-index:1;}
+.stop2 .num2.tmp{background:transparent; border:2px dashed var(--accent); color:var(--accent);}
+.stop2-card{display:flex; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--card);}
+.stop2-card.exp{border-color:var(--accent);}
+.stop2-main{flex:1; min-width:0; padding:10px 12px 10px 20px; display:flex; align-items:center; gap:6px;}
+.stop2-name{font-size:14px; font-weight:700;}
+.stop2-addr{font-size:11px; color:var(--muted); margin-top:2px;}
+.stop2-arrows2{display:flex; gap:10px; margin-top:8px;}
+.stop2-ic{background:none; border:none; padding:4px; font-size:13px; color:var(--text2); flex-shrink:0; line-height:1;}
+.stop2-ic.off{color:var(--border); pointer-events:none;}
+.stop2-ic.on{color:var(--accent);}
+.stop2-more{font-size:16px; letter-spacing:1px;}
+.stop2-actions{width:52px; flex-shrink:0; background:var(--accent); display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:10px;}
+.stop2-actions button{background:none; border:none; color:var(--on-accent); font-size:16px; padding:6px;}
+.stop2-actions button.del{color:#712b13;}
 nav{
   position:fixed; bottom:0; left:0; right:0; z-index:20;
   background:var(--bg); border-top:1px solid var(--border);
@@ -734,12 +741,8 @@ html[data-theme="light"] .q-n{color:var(--a-900);}
     </div>
     <div class="days" id="dayTabs"></div>
 
-    <div class="section-label" id="dayLabel">停靠順序</div>
+    <div class="section-label dlbl" id="dayLabel"><span id="dayLabelTxt">停靠順序</span><span id="dayLabelChev">▾</span></div>
     <div id="routeOrder"></div>
-    <button type="button" class="btn-sm" id="rMapToggle" style="width:100%;margin:0 0 12px;justify-content:center;">
-      <span class="ic">🗺️</span><span class="car" style="margin-left:6px;">顯示路線地圖 ▼</span>
-    </button>
-    <div id="rMapBox" style="display:none;height:220px;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin:0 0 12px;background:var(--card2);"></div>
     <div class="row" style="margin-bottom:4px;">
       <input type="text" id="tmpName" placeholder="臨時地點(車站、飯店、加油站)" style="flex:2.4;">
       <button class="btn-sm" id="btnTmp" style="flex:1;">＋ 插入</button>
@@ -753,7 +756,11 @@ html[data-theme="light"] .q-n{color:var(--a-900);}
     </div>
     <div class="notice warn" id="transitNote" style="display:none;">ⓘ 大眾運輸不支援一次多停靠點(Google 限制),已自動拆成分段導航,搭完一段按下一段。</div>
     <div class="notice warn" id="maxNote" style="display:none;">ⓘ 停靠點超過 9 個,Google 地圖一次最多帶 9 個停靠點,超出的請分段導航或分成兩條路線。</div>
-    <div id="goArea" style="margin-top:10px;"></div>
+    <div class="row" id="goMapRow" style="margin-top:10px;align-items:stretch;">
+      <div id="goArea" style="flex:1.6;"></div>
+      <button type="button" class="btn-sm" id="rMapToggle" style="flex:1;justify-content:center;white-space:nowrap;">🗺️ 顯示路線地圖</button>
+    </div>
+    <div id="rMapBox" style="display:none;height:220px;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin:10px 0 12px;background:var(--card2);"></div>
     <button class="btn-sm" id="btnAddSpots" style="width:100%;margin-top:10px;justify-content:center">＋ 從口袋名單加景點</button>
   </div>
 
@@ -983,8 +990,6 @@ html[data-theme="light"] .q-n{color:var(--a-900);}
   <div class="pp-body" id="mpBody"></div>
 </div>
 
-<div class="routeStrip" id="routeStrip"></div>
-
 <nav>
   <button data-p="near">
     <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>附近探索
@@ -1045,6 +1050,7 @@ var IC={
   up:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
   down:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>',
   x:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+  edit:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
   star:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 21l1.1-6.5L2.6 9.8l6.5-.9z"/></svg>',
   ext:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>',
   walk:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="M10.5 21l2-5-3-3 1-5 4 2 2 2"/><path d="M7 21l2.5-6"/></svg>'
@@ -1081,7 +1087,7 @@ function gmapsReady(){
   gmapsGeocoder=new google.maps.Geocoder();
   rpInitAutocomplete();
   if($("rpHint"))$("rpHint").textContent="";
-  if(typeof updateRouteStrip==="function")updateRouteStrip();
+  if(typeof ensureLegTimes==="function")ensureLegTimes();
   if(typeof renderRouteMap==="function")renderRouteMap();
 }
 function ensureGoogleMapsLoaded(){
@@ -1130,7 +1136,6 @@ function goPage(p){
   if(p==="route"){if(curTrip){renderTripEditor();}else{showTripScreen("overview");renderTripList();}}
   if(p==="near"){try{renderSrcBar();}catch(e){}}
   if(p==="metro"){ if(!mSvg){mMeasure();mInit();} else {mMeasure();mApply();} }
-  if(typeof updateRouteStrip==="function")updateRouteStrip();
   window.scrollTo(0,0);
 }
 document.querySelectorAll("nav button").forEach(function(b){
@@ -1319,7 +1324,6 @@ function showTripScreen(which){
   $("tripOverview").style.display=which==="overview"?"":"none";
   $("tripEditor").style.display=which==="editor"?"":"none";
   $("spotPicker").style.display=which==="picker"?"":"none";
-  if(typeof updateRouteStrip==="function")updateRouteStrip();
 }
 function renderTripList(){
   $("tripList").innerHTML=trips.length?trips.map(function(t){
@@ -1377,8 +1381,10 @@ function renderTripEditor(){
     t.days.push({stops:[],mode:"driving",useCur:true});
     curDay=t.days.length-1; saveTrips(); loadDayIntoRoute(); renderTripEditor();
   });
-  $("dayLabel").textContent="Day "+(curDay+1)+" 停靠順序"+
+  $("dayLabelTxt").textContent="Day "+(curDay+1)+" 停靠順序"+
     (dayDateStr(t,curDay)?" · "+dayDateStr(t,curDay)+dayWeekStr(t,curDay):"");
+  $("routeOrder").style.display=dayListCollapsed?"none":"";
+  $("dayLabelChev").textContent=dayListCollapsed?"▸":"▾";
   renderRoute();
 }
 $("btnTripBack").addEventListener("click",function(){
@@ -1514,90 +1520,108 @@ function renderRoutePick(){
     });
   });
 }
+var expandedStop=null, dayListCollapsed=false;
+function stopAddr(s){
+  if(!s||!s.pid)return "";
+  var p=places.filter(function(x){return x.id===s.pid;})[0];
+  return (p&&p.addr)?p.addr:"";
+}
+function toggleStopExpand(i){
+  expandedStop=(expandedStop===i)?null:i;
+  renderRoute();
+}
+function editStop(i){
+  var s=route[i]; if(!s)return;
+  var val=prompt("編輯地點名稱",s.name);
+  if(val===null)return;
+  val=val.trim(); if(!val)return;
+  route[i]={name:val,pid:null,tmp:true};
+  expandedStop=null;
+  doneLeg={};syncDayFromRoute();renderTripEditor();
+}
 function renderRoute(){
+  if(expandedStop!=null&&expandedStop>=route.length)expandedStop=null;
   $("routeOrder").innerHTML=
   '<div class="stop start" id="startRow">'+
   '<span class="num">'+(useCur?"起":"—")+'</span>'+
   '<span class="n" style="color:var(--text2);font-weight:400;">'+(useCur?"目前位置":"不用目前位置,直接從第 1 站出發")+'</span>'+
   '<span style="font-size:11.5px;color:var(--accent);white-space:nowrap;">點一下切換</span></div>'+
   (route.length?route.map(function(s,i){
-    return '<div class="stop'+(s.tmp?" tmp":"")+'"><span class="num">'+(i+1)+'</span>'+
-    '<span class="n">'+esc(s.name)+'</span>'+(s.tmp?'<span class="tag">臨時</span>':'')+
-    '<span style="display:flex;gap:0;">'+
-    (i>0?'<button class="btn-icon" data-mv="'+i+',-1" aria-label="上移">'+IC.up+'</button>':'')+
-    (i<route.length-1?'<button class="btn-icon" data-mv="'+i+',1" aria-label="下移">'+IC.down+'</button>':'')+
-    '<button class="btn-icon" data-rm="'+i+'" aria-label="移除">'+IC.x+'</button></span></div>';
+    var exp=expandedStop===i;
+    var addr=stopAddr(s);
+    var upBtn=i>0?'<button class="stop2-ic" data-mv="'+i+',-1" aria-label="上移">↑</button>':'<span class="stop2-ic off">↑</span>';
+    var downBtn=i<route.length-1?'<button class="stop2-ic" data-mv="'+i+',1" aria-label="下移">↓</button>':'<span class="stop2-ic off">↓</span>';
+    var card='<div class="stop2" data-i="'+i+'">'+
+      '<span class="num2'+(s.tmp?" tmp":"")+'">'+(i+1)+'</span>'+
+      '<div class="stop2-card'+(exp?" exp":"")+'">'+
+        '<div class="stop2-main">'+
+          '<div style="flex:1;min-width:0;">'+
+            '<div class="stop2-name">'+esc(s.name)+(s.tmp?' <span class="tag">臨時</span>':'')+'</div>'+
+            (addr?'<div class="stop2-addr">'+esc(addr)+'</div>':'')+
+            (exp?'<div class="stop2-arrows2">'+upBtn+downBtn+'</div>':'')+
+          '</div>'+
+          (!exp?upBtn+downBtn+'<button class="stop2-ic stop2-more" data-more="'+i+'" aria-label="更多">⋯</button>'
+              :'<button class="stop2-ic stop2-more on" data-more="'+i+'" aria-label="收合">⋯</button>')+
+        '</div>'+
+        (exp?'<div class="stop2-actions">'+
+          '<button data-edit="'+i+'" aria-label="編輯">'+IC.edit+'</button>'+
+          '<button class="del" data-rm="'+i+'" aria-label="刪除">'+IC.x+'</button>'+
+        '</div>':'')+
+      '</div>'+
+    '</div>';
+    if(i<route.length-1)card+='<div class="legrow"><span class="ic">'+legIcon()+'</span><span id="legt-'+i+'">…</span></div>';
+    return card;
   }).join(""):'<p class="empty">還沒有停靠點,在上方點選或插入臨時地點。</p>');
   $("routeOrder").querySelectorAll("[data-mv]").forEach(function(b){
     b.addEventListener("click",function(){
       var a=b.dataset.mv.split(","),i=+a[0],d=+a[1],t=route[i];
-      route[i]=route[i+d];route[i+d]=t;doneLeg={};syncDayFromRoute();renderTripEditor();
+      route[i]=route[i+d];route[i+d]=t;doneLeg={};expandedStop=null;syncDayFromRoute();renderTripEditor();
     });
   });
   $("routeOrder").querySelectorAll("[data-rm]").forEach(function(b){
-    b.addEventListener("click",function(){route.splice(+b.dataset.rm,1);doneLeg={};syncDayFromRoute();renderTripEditor();});
+    b.addEventListener("click",function(){route.splice(+b.dataset.rm,1);expandedStop=null;doneLeg={};syncDayFromRoute();renderTripEditor();});
+  });
+  $("routeOrder").querySelectorAll("[data-more]").forEach(function(b){
+    b.addEventListener("click",function(){toggleStopExpand(+b.dataset.more);});
+  });
+  $("routeOrder").querySelectorAll("[data-edit]").forEach(function(b){
+    b.addEventListener("click",function(){editStop(+b.dataset.edit);});
   });
   $("startRow").addEventListener("click",function(){useCur=!useCur;doneLeg={};syncDayFromRoute();renderRoute();});
   $("transitNote").style.display=(mode==="transit"&&route.length>1)?"block":"none";
   $("maxNote").style.display=(mode!=="transit"&&route.length>9)?"block":"none";
   renderGo();
-  updateRouteStrip();
+  ensureLegTimes();
   if(typeof renderRouteMap==="function")renderRouteMap();
 }
+if($("dayLabel"))$("dayLabel").addEventListener("click",function(){
+  dayListCollapsed=!dayListCollapsed;
+  $("routeOrder").style.display=dayListCollapsed?"none":"";
+  $("dayLabelChev").textContent=dayListCollapsed?"▸":"▾";
+});
 
-/* ================= 底部路線橫向捲動條 ================= */
+/* ================= 停靠點間交通時間(行內顯示) ================= */
 var rsCache={};
-function rsPoints(){
-  var pts=useCur?[{name:"目前位置",cur:true}]:[];
-  return pts.concat(route);
+function legIcon(){return mode==="walking"?"🚶":mode==="transit"?"🚃":"🚗";}
+function legKey(){
+  if(!curTrip||route.length<2)return null;
+  return curTrip.id+"|"+curDay+"|"+mode+"|"+route.map(function(s){return s.name;}).join(">");
 }
-function rsKey(){
-  if(!curTrip)return null;
-  var pts=rsPoints();
-  if(pts.length<2)return null;
-  return curTrip.id+"|"+curDay+"|"+mode+"|"+pts.map(function(p){return p.cur?"@cur":p.name;}).join(">");
+function applyLegTimes(){
+  var key=legKey(); var c=key&&rsCache[key];
+  if(!c||!c.legs)return;
+  c.legs.forEach(function(t,i){var el=$("legt-"+i); if(el)el.textContent=t;});
 }
-function rsModeIcon(){return mode==="walking"?"🚶":mode==="transit"?"🚃":"🚗";}
-function updateRouteStrip(){
-  var editorOpen=$("tripEditor")&&$("tripEditor").style.display!=="none";
-  var show=curPage==="route"&&!!curTrip&&editorOpen&&route.length>=1;
-  document.body.classList.toggle("hasRouteStrip",show);
-  $("routeStrip").classList.toggle("show",show);
-  if(!show){$("routeStrip").innerHTML="";return;}
-  if(!gmapsLoaded)ensureGoogleMapsLoaded();
-  renderRouteStripContent();
-}
-function renderRouteStripContent(){
-  var pts=rsPoints();
-  var key=rsKey();
-  var cached=key?rsCache[key]:null;
-  var h='<div class="rs-daylabel">第 '+(curDay+1)+' 天路線</div><div class="rs-scroll">';
-  pts.forEach(function(p,i){
-    h+='<div class="rs-pt"><span class="rs-num'+(p.cur?" rs-cur":"")+'">'+
-      (p.cur?"起":i+(pts[0].cur?0:1))+'</span>'+
-      '<span class="rs-nm">'+esc(p.cur?"目前位置":p.name)+'</span></div>';
-    if(i<pts.length-1){
-      var legTxt="…";
-      if(!gmapsLoaded)legTxt="—";
-      else if(cached&&cached.legs&&cached.legs[i]!=null)legTxt=cached.legs[i];
-      h+='<div class="rs-leg2"><span class="ic">'+rsModeIcon()+'</span><span>'+legTxt+'</span></div>';
-    }
-  });
-  h+='</div>';
-  $("routeStrip").innerHTML=h;
-  if(pts.length>1&&gmapsLoaded&&(!cached||cached.stale)){
-    fetchRouteStripTimes(key,pts);
-  }
-}
-function fetchRouteStripTimes(key,pts){
-  if(!key||!gmapsLoaded)return;
-  if(rsCache[key]&&rsCache[key].loading)return;
+function ensureLegTimes(){
+  var key=legKey();
+  if(!key)return;
+  if(!gmapsLoaded){ensureGoogleMapsLoaded();return;}
+  var c=rsCache[key];
+  if(c&&c.legs){applyLegTimes();return;}
+  if(c&&c.loading)return;
   rsCache[key]={loading:true};
-  var origins=[],destinations=[];
-  for(var i=0;i<pts.length-1;i++){
-    origins.push(pts[i].cur&&myPos?new google.maps.LatLng(myPos.lat,myPos.lng):pts[i].name);
-    destinations.push(pts[i+1].name);
-  }
+  var origins=route.slice(0,-1).map(function(s){return s.name;});
+  var destinations=route.slice(1).map(function(s){return s.name;});
   var tmode=mode==="walking"?google.maps.TravelMode.WALKING:
     mode==="transit"?google.maps.TravelMode.TRANSIT:google.maps.TravelMode.DRIVING;
   var svc=new google.maps.DistanceMatrixService();
@@ -1609,7 +1633,7 @@ function fetchRouteStripTimes(key,pts){
       if(!(el&&el.status==="OK"))console.warn("[路線時間] 第"+(i+1)+"段取得失敗",status,el&&el.status);
     }
     rsCache[key]={loading:false,legs:legs};
-    if(rsKey()===key)renderRouteStripContent();
+    if(legKey()===key)applyLegTimes();
   });
 }
 
@@ -1618,11 +1642,12 @@ var rMap=null, rMapMarkers=[], rMapPoly=null, rMapDirRenderer=null, rMapOpen=fal
 $("rMapToggle").addEventListener("click",function(){
   rMapOpen=!rMapOpen;
   $("rMapBox").style.display=rMapOpen?"block":"none";
-  $("rMapToggle").querySelector(".car").textContent=rMapOpen?"收合地圖 ▲":"顯示路線地圖 ▼";
+  $("rMapToggle").textContent=rMapOpen?"🗺️ 收合地圖":"🗺️ 顯示路線地圖";
   if(rMapOpen)renderRouteMap();
 });
 function rMapSig(){
-  var pts=rsPoints();
+  var pts=useCur?[{cur:true}]:[];
+  pts=pts.concat(route);
   return (curTrip?curTrip.id:"")+"|"+curDay+"|"+mode+"|"+pts.map(function(p){return p.cur?"@cur":p.name;}).join(">");
 }
 function rMapClearOverlays(){
@@ -1638,7 +1663,7 @@ function renderRouteMap(){
     setTimeout(function(){if(rMapOpen&&gmapsLoaded)renderRouteMap();},1200);
     return;
   }
-  var pts=rsPoints();
+  var pts=(useCur?[{cur:true}]:[]).concat(route);
   if(!pts.length){$("rMapBox").innerHTML='<p class="empty" style="margin:0;padding:80px 10px 0;">還沒有停靠點</p>';return;}
   var sig=rMapSig();
   if(rMapKey===sig&&rMap)return;
@@ -3696,17 +3721,15 @@ function renderSrcBar(){
   var el=$("srcBar"); if(!el)return;
   var k=gKey(), u=gUsage(), cap=gFreeCap(), dcap=gCap();
   var leftM=Math.max(0,cap-(u.n||0)), leftD=dcap>0?Math.max(0,dcap-(u.dn||0)):null;
-  var pct=Math.min(100,Math.round((u.n||0)/cap*100));
   el.innerHTML='<span class="src-dot" style="background:'+(k?"#6BB6FF":"var(--muted)")+'"></span>'+
    '<span style="flex:1;min-width:0">'+
      '<span class="src-t">'+(k?"Google 地圖資料":"OpenStreetMap")+'</span>'+
      '<span class="mtag" style="margin-left:6px">'+(k?"已設定金鑰":"免金鑰")+'</span>'+
-     (k
-       ? '<br><span class="src-s">本月還剩 <b class="src-n">'+leftM.toLocaleString()+'</b> 次免費'+
-         (leftD!==null?'・今日還剩 <b class="src-n">'+leftD+'</b> 次':'')+
-         '</span><span class="src-bar"><i style="width:'+pct+'%"></i></span>'+
-         '<span class="src-s2">已用 '+(u.n||0)+' / '+cap.toLocaleString()+' 次・每月 1 號歸零</span>'
-       : '<br><span class="src-s">免費免設定,但小店覆蓋率較低。設定金鑰可改用 Google 並顯示剩餘免費次數</span>')+
+     '<span class="src-s" style="display:block;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+
+       (k
+         ? "本月剩 "+leftM.toLocaleString()+" 次"+(leftD!==null?"・今日剩 "+leftD+" 次":"")
+         : "免費・小店較少・設金鑰可切換 Google")+
+     '</span>'+
    '</span><span style="color:var(--muted);font-size:13px;white-space:nowrap">設定 ›</span>';
 }
 /* ---- 設定面板 ---- */

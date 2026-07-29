@@ -21,6 +21,7 @@ body{
   background:var(--bg); color:var(--text); font-size:16px; line-height:1.55;
   padding-bottom:calc(74px + env(safe-area-inset-bottom));
 }
+body.hasRouteStrip{padding-bottom:calc(74px + 66px + env(safe-area-inset-bottom));}
 a{color:var(--accent);} a:hover{color:var(--accent-dark);}
 svg{display:block; flex-shrink:0;}
 header{
@@ -128,6 +129,22 @@ button:active{transform:scale(.98);}
 .leg.ok2 .num{background:var(--ok-bg); color:var(--ok);}
 .leg.ok2{color:var(--muted);}
 .leg .t{flex:1; overflow:hidden; text-overflow:ellipsis;}
+.routeStrip{
+  position:fixed; left:0; right:0; bottom:calc(58px + env(safe-area-inset-bottom)); z-index:19;
+  background:var(--card); border-top:1px solid var(--border);
+  padding:10px 12px calc(8px + env(safe-area-inset-bottom,0px)); display:none;
+  backdrop-filter:blur(var(--blur)); -webkit-backdrop-filter:blur(var(--blur));
+}
+.routeStrip.show{display:block;}
+.rs-daylabel{font-size:11.5px; font-weight:800; color:var(--accent); margin:0 0 6px;}
+.rs-scroll{display:flex; align-items:flex-start; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+.rs-scroll::-webkit-scrollbar{display:none; height:0;}
+.rs-pt{display:flex; flex-direction:column; align-items:center; flex-shrink:0; width:58px;}
+.rs-num{width:26px; height:26px; border-radius:50%; background:var(--accent); color:var(--on-accent); font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.rs-num.rs-cur{background:transparent; border:2px dashed var(--accent); color:var(--accent); font-size:10px;}
+.rs-nm{font-size:11px; color:var(--text2); margin-top:4px; text-align:center; line-height:1.2; max-width:56px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.rs-leg2{display:flex; flex-direction:column; align-items:center; flex-shrink:0; min-width:44px; padding-top:3px; font-size:10.5px; color:var(--muted); white-space:nowrap;}
+.rs-leg2 .ic{font-size:13px; line-height:1;}
 nav{
   position:fixed; bottom:0; left:0; right:0; z-index:20;
   background:var(--bg); border-top:1px solid var(--border);
@@ -962,6 +979,8 @@ html[data-theme="light"] .q-n{color:var(--a-900);}
   <div class="pp-body" id="mpBody"></div>
 </div>
 
+<div class="routeStrip" id="routeStrip"></div>
+
 <nav>
   <button data-p="near">
     <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>附近探索
@@ -1058,6 +1077,7 @@ function gmapsReady(){
   gmapsGeocoder=new google.maps.Geocoder();
   rpInitAutocomplete();
   if($("rpHint"))$("rpHint").textContent="";
+  if(typeof updateRouteStrip==="function")updateRouteStrip();
 }
 function ensureGoogleMapsLoaded(){
   if(gmapsLoaded||gmapsLoading)return;
@@ -1105,6 +1125,7 @@ function goPage(p){
   if(p==="route"){if(curTrip){renderTripEditor();}else{showTripScreen("overview");renderTripList();}}
   if(p==="near"){try{renderSrcBar();}catch(e){}}
   if(p==="metro"){ if(!mSvg){mMeasure();mInit();} else {mMeasure();mApply();} }
+  if(typeof updateRouteStrip==="function")updateRouteStrip();
   window.scrollTo(0,0);
 }
 document.querySelectorAll("nav button").forEach(function(b){
@@ -1293,6 +1314,7 @@ function showTripScreen(which){
   $("tripOverview").style.display=which==="overview"?"":"none";
   $("tripEditor").style.display=which==="editor"?"":"none";
   $("spotPicker").style.display=which==="picker"?"":"none";
+  if(typeof updateRouteStrip==="function")updateRouteStrip();
 }
 function renderTripList(){
   $("tripList").innerHTML=trips.length?trips.map(function(t){
@@ -1514,6 +1536,74 @@ function renderRoute(){
   $("transitNote").style.display=(mode==="transit"&&route.length>1)?"block":"none";
   $("maxNote").style.display=(mode!=="transit"&&route.length>9)?"block":"none";
   renderGo();
+  updateRouteStrip();
+}
+
+/* ================= 底部路線橫向捲動條 ================= */
+var rsCache={};
+function rsPoints(){
+  var pts=useCur?[{name:"目前位置",cur:true}]:[];
+  return pts.concat(route);
+}
+function rsKey(){
+  if(!curTrip)return null;
+  var pts=rsPoints();
+  if(pts.length<2)return null;
+  return curTrip.id+"|"+curDay+"|"+mode+"|"+pts.map(function(p){return p.cur?"@cur":p.name;}).join(">");
+}
+function rsModeIcon(){return mode==="walking"?"🚶":mode==="transit"?"🚃":"🚗";}
+function updateRouteStrip(){
+  var editorOpen=$("tripEditor")&&$("tripEditor").style.display!=="none";
+  var show=curPage==="route"&&!!curTrip&&editorOpen&&route.length>=1;
+  document.body.classList.toggle("hasRouteStrip",show);
+  $("routeStrip").classList.toggle("show",show);
+  if(!show){$("routeStrip").innerHTML="";return;}
+  if(!gmapsLoaded)ensureGoogleMapsLoaded();
+  renderRouteStripContent();
+}
+function renderRouteStripContent(){
+  var pts=rsPoints();
+  var key=rsKey();
+  var cached=key?rsCache[key]:null;
+  var h='<div class="rs-daylabel">第 '+(curDay+1)+' 天路線</div><div class="rs-scroll">';
+  pts.forEach(function(p,i){
+    h+='<div class="rs-pt"><span class="rs-num'+(p.cur?" rs-cur":"")+'">'+
+      (p.cur?"起":i+(pts[0].cur?0:1))+'</span>'+
+      '<span class="rs-nm">'+esc(p.cur?"目前位置":p.name)+'</span></div>';
+    if(i<pts.length-1){
+      var legTxt="…";
+      if(!gmapsLoaded)legTxt="—";
+      else if(cached&&cached.legs&&cached.legs[i]!=null)legTxt=cached.legs[i];
+      h+='<div class="rs-leg2"><span class="ic">'+rsModeIcon()+'</span><span>'+legTxt+'</span></div>';
+    }
+  });
+  h+='</div>';
+  $("routeStrip").innerHTML=h;
+  if(pts.length>1&&gmapsLoaded&&(!cached||cached.stale)){
+    fetchRouteStripTimes(key,pts);
+  }
+}
+function fetchRouteStripTimes(key,pts){
+  if(!key||!gmapsLoaded)return;
+  if(rsCache[key]&&rsCache[key].loading)return;
+  rsCache[key]={loading:true};
+  var origins=[],destinations=[];
+  for(var i=0;i<pts.length-1;i++){
+    origins.push(pts[i].cur&&myPos?new google.maps.LatLng(myPos.lat,myPos.lng):pts[i].name);
+    destinations.push(pts[i+1].name);
+  }
+  var tmode=mode==="walking"?google.maps.TravelMode.WALKING:
+    mode==="transit"?google.maps.TravelMode.TRANSIT:google.maps.TravelMode.DRIVING;
+  var svc=new google.maps.DistanceMatrixService();
+  svc.getDistanceMatrix({origins:origins,destinations:destinations,travelMode:tmode},function(res,status){
+    var legs=[];
+    for(var i=0;i<origins.length;i++){
+      var el=(status==="OK"&&res&&res.rows[i]&&res.rows[i].elements[i]);
+      legs.push(el&&el.status==="OK"?el.duration.text:"—");
+    }
+    rsCache[key]={loading:false,legs:legs};
+    if(rsKey()===key)renderRouteStripContent();
+  });
 }
 function renderGo(){
   if(!route.length){$("goArea").innerHTML='<button class="btn-primary" disabled>先點選或插入地點</button>';return;}

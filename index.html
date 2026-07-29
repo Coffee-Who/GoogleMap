@@ -736,6 +736,10 @@ html[data-theme="light"] .q-n{color:var(--a-900);}
 
     <div class="section-label" id="dayLabel">停靠順序</div>
     <div id="routeOrder"></div>
+    <button type="button" class="btn-sm" id="rMapToggle" style="width:100%;margin:0 0 12px;justify-content:center;">
+      <span class="ic">🗺️</span><span class="car" style="margin-left:6px;">顯示路線地圖 ▼</span>
+    </button>
+    <div id="rMapBox" style="display:none;height:220px;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin:0 0 12px;background:var(--card2);"></div>
     <div class="row" style="margin-bottom:4px;">
       <input type="text" id="tmpName" placeholder="臨時地點(車站、飯店、加油站)" style="flex:2.4;">
       <button class="btn-sm" id="btnTmp" style="flex:1;">＋ 插入</button>
@@ -1078,6 +1082,7 @@ function gmapsReady(){
   rpInitAutocomplete();
   if($("rpHint"))$("rpHint").textContent="";
   if(typeof updateRouteStrip==="function")updateRouteStrip();
+  if(typeof renderRouteMap==="function")renderRouteMap();
 }
 function ensureGoogleMapsLoaded(){
   if(gmapsLoaded||gmapsLoading)return;
@@ -1537,6 +1542,7 @@ function renderRoute(){
   $("maxNote").style.display=(mode!=="transit"&&route.length>9)?"block":"none";
   renderGo();
   updateRouteStrip();
+  if(typeof renderRouteMap==="function")renderRouteMap();
 }
 
 /* ================= 底部路線橫向捲動條 ================= */
@@ -1600,9 +1606,93 @@ function fetchRouteStripTimes(key,pts){
     for(var i=0;i<origins.length;i++){
       var el=(status==="OK"&&res&&res.rows[i]&&res.rows[i].elements[i]);
       legs.push(el&&el.status==="OK"?el.duration.text:"—");
+      if(!(el&&el.status==="OK"))console.warn("[路線時間] 第"+(i+1)+"段取得失敗",status,el&&el.status);
     }
     rsCache[key]={loading:false,legs:legs};
     if(rsKey()===key)renderRouteStripContent();
+  });
+}
+
+/* ================= 停靠順序小地圖 ================= */
+var rMap=null, rMapMarkers=[], rMapPoly=null, rMapDirRenderer=null, rMapOpen=false, rMapKey=null;
+$("rMapToggle").addEventListener("click",function(){
+  rMapOpen=!rMapOpen;
+  $("rMapBox").style.display=rMapOpen?"block":"none";
+  $("rMapToggle").querySelector(".car").textContent=rMapOpen?"收合地圖 ▲":"顯示路線地圖 ▼";
+  if(rMapOpen)renderRouteMap();
+});
+function rMapSig(){
+  var pts=rsPoints();
+  return (curTrip?curTrip.id:"")+"|"+curDay+"|"+mode+"|"+pts.map(function(p){return p.cur?"@cur":p.name;}).join(">");
+}
+function rMapClearOverlays(){
+  rMapMarkers.forEach(function(m){m.setMap(null);});rMapMarkers=[];
+  if(rMapPoly){rMapPoly.setMap(null);rMapPoly=null;}
+  if(rMapDirRenderer){rMapDirRenderer.setMap(null);rMapDirRenderer=null;}
+}
+function renderRouteMap(){
+  if(!rMapOpen)return;
+  if(!gmapsLoaded){
+    ensureGoogleMapsLoaded();
+    $("rMapBox").innerHTML='<p class="empty" style="margin:0;padding:80px 10px 0;">地圖載入中,請確認已在「資料來源設定」貼上 Google API 金鑰…</p>';
+    setTimeout(function(){if(rMapOpen&&gmapsLoaded)renderRouteMap();},1200);
+    return;
+  }
+  var pts=rsPoints();
+  if(!pts.length){$("rMapBox").innerHTML='<p class="empty" style="margin:0;padding:80px 10px 0;">還沒有停靠點</p>';return;}
+  var sig=rMapSig();
+  if(rMapKey===sig&&rMap)return;
+  rMapKey=sig;
+  $("rMapBox").innerHTML='<div id="rMapCanvas" style="width:100%;height:100%;"></div>';
+  Promise.all(pts.map(function(p){
+    if(p.cur&&myPos)return Promise.resolve({lat:myPos.lat,lng:myPos.lng});
+    var c=coordOf(p);
+    if(c&&c.lat!=null&&c.lng!=null)return Promise.resolve(c);
+    return ppGeocode(p.name);
+  })).then(function(coords){
+    if(rMapKey!==sig)return;
+    var valid=[];
+    coords.forEach(function(c,i){if(c&&c.lat!=null&&c.lng!=null)valid.push({c:c,p:pts[i],i:i});});
+    var canvas=$("rMapCanvas");
+    if(!canvas)return;
+    if(!valid.length){$("rMapBox").innerHTML='<p class="empty" style="margin:0;padding:70px 10px 0;">找不到座標,請確認站名拼字,或到「資料來源設定」貼上 Google API 金鑰。</p>';return;}
+    rMap=new google.maps.Map(canvas,{center:{lat:valid[0].c.lat,lng:valid[0].c.lng},zoom:12,disableDefaultUI:true,zoomControl:true,gestureHandling:"greedy"});
+    rMapClearOverlays();
+    var bounds=new google.maps.LatLngBounds();
+    valid.forEach(function(v){
+      var isCur=!!v.p.cur;
+      var marker=new google.maps.Marker({
+        position:{lat:v.c.lat,lng:v.c.lng},map:rMap,
+        label:{text:isCur?"起":String(v.i+(pts[0].cur?0:1)),color:"#ffffff",fontSize:"12px",fontWeight:"800"},
+        icon:{path:google.maps.SymbolPath.CIRCLE,scale:13,fillColor:isCur?"#8fa0b8":"#F0B84A",fillOpacity:1,strokeColor:"#ffffff",strokeWeight:2}
+      });
+      rMapMarkers.push(marker);
+      bounds.extend(marker.getPosition());
+    });
+    rMap.fitBounds(bounds,40);
+    if(valid.length>1)drawRouteMapPath(valid,sig);
+  });
+}
+function drawRouteMapPath(valid,sig){
+  var latlngs=valid.map(function(v){return {lat:v.c.lat,lng:v.c.lng};});
+  function fallbackDashedLine(){
+    if(rMapKey!==sig||!rMap)return;
+    rMapPoly=new google.maps.Polyline({path:latlngs,geodesic:true,strokeOpacity:0,map:rMap,
+      icons:[{icon:{path:"M 0,-1 0,1",strokeOpacity:1,scale:3,strokeColor:"#F0B84A"},offset:"0",repeat:"12px"}]});
+  }
+  if(mode==="transit"||latlngs.length>10){fallbackDashedLine();return;}
+  var svc=new google.maps.DirectionsService();
+  var tmode=mode==="walking"?google.maps.TravelMode.WALKING:google.maps.TravelMode.DRIVING;
+  var origin=latlngs[0],dest=latlngs[latlngs.length-1],wp=latlngs.slice(1,-1).map(function(l){return{location:l,stopover:true};});
+  svc.route({origin:origin,destination:dest,waypoints:wp,travelMode:tmode,optimizeWaypoints:false},function(res,status){
+    if(rMapKey!==sig||!rMap)return;
+    if(status==="OK"){
+      rMapDirRenderer=new google.maps.DirectionsRenderer({map:rMap,directions:res,suppressMarkers:true,preserveViewport:true,
+        polylineOptions:{strokeColor:"#F0B84A",strokeWeight:5,strokeOpacity:.9}});
+    }else{
+      console.warn("[路線地圖] 路徑計算失敗",status);
+      fallbackDashedLine();
+    }
   });
 }
 function renderGo(){

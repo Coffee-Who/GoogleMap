@@ -139,28 +139,32 @@
 
 <!-- ============ 頁 3:附近探索 ============ -->
 <section class="page" id="page-near">
-  <div class="chips" style="margin-top:0;">
-    <button class="chip on" id="nmExplore">探索新地點</button>
-  </div>
-  <div class="src-bar" id="srcBar" onclick="openGSet()"></div>
-  <button class="btn-primary" id="btnLoc">定位我的位置</button>
-  <p class="hint" id="locStat">按下按鈕,列出附近的景點與美食(資料來源:OpenStreetMap)</p>
-  <div id="nearCtrl" style="display:none; margin-top:10px;">
-    <div class="distRow">
-      <span id="nearRBtns" style="display:contents">
-        <div class="distItem"><button class="distCircle" data-r="500">0.5</button><span class="distCap">公里</span></div>
-        <div class="distItem"><button class="distCircle on" data-r="1000">1</button><span class="distCap on">公里</span></div>
-        <div class="distItem"><button class="distCircle" data-r="3000">3</button><span class="distCap">公里</span></div>
-      </span>
-      <div class="vDivider"></div>
-      <span id="nearSortBtns" style="display:contents">
-        <div class="distItem"><button class="distCircle sortCircle on" data-s="dist">&#128205;</button><span class="distCap on">依距離</span></div>
-        <div class="distItem"><button class="distCircle sortCircle" data-s="rating">&#9733;</button><span class="distCap">依評價</span></div>
-        <div class="distItem"><button class="distCircle modeToggle" id="nmMineBtn">&#128278;</button><span class="distCap" id="nmMineCap">只看口袋名單</span></div>
-      </span>
+  <div class="near-topbar idle" id="nearTopbar">
+    <div class="ntb-dot" id="ntbDot">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12S3 16 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
     </div>
-    <div class="chips" id="nearCats" style="margin:0 0 4px;"></div>
-    <div class="near-mapprev">
+    <button class="ntb-body" id="btnLoc" type="button">
+      <span class="ntb-title" id="ntbTitle">點一下,定位我的位置</span>
+      <span class="ntb-sub" id="locStat">找出附近的景點與美食(資料來源:OpenStreetMap)</span>
+    </button>
+    <button class="ntb-gear" id="srcGearBtn" type="button" onclick="openGSet()" aria-label="資料來源設定">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 4v2M12 18v2M4 12h2M18 12h2M6 6l1.5 1.5M16.5 16.5L18 18M18 6l-1.5 1.5M7.5 16.5L6 18"/></svg>
+    </button>
+  </div>
+
+  <div id="nearCtrl" style="display:none;">
+    <div class="chips" id="nearCats"></div>
+
+    <div class="filter-row" id="filterRow" onclick="openNearFilter()">
+      <span class="fr-txt">範圍 <b id="frRange">1 公里</b>・排序 <b id="frSort">依距離</b><span id="frMine" style="display:none">・只看口袋名單</span></span>
+      <span class="fr-txt fr-link">篩選 ›</span>
+    </div>
+
+    <div class="near-mapprev" id="nearMapPrev">
+      <span class="np-tag">示意圖・非即時地圖</span>
+      <button class="np-expand" id="btnExpandMap" type="button" aria-label="放大看地圖" title="放大看地圖">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+      </button>
       <div class="np-me"></div>
       <span class="np-dot" style="left:24%;top:28%;"></span>
       <span class="np-dot" style="left:64%;top:42%;background:#7FB3FF;"></span>
@@ -173,7 +177,7 @@
     </div>
     <div class="notice info" id="nearKwHint" style="display:none;margin:0 0 10px;padding:9px 12px;text-align:left;"></div>
   </div>
-  <div id="nearList" style="margin-top:10px;"></div>
+  <div id="nearList" style="margin-top:4px;"></div>
   <div class="row" id="nearOut" style="margin-top:6px; display:none;">
     <button class="btn-sm" id="btnGNear">Google 地圖看全部</button>
     <button class="btn-sm" id="btnTabeNear">在 Tabelog 找這附近</button>
@@ -452,6 +456,36 @@
      3. 建立 API 金鑰,限制 HTTP 參照網址為你的網站<br>4. 設定每日配額上限<br>5. 貼到上方欄位</p>
 
   <button class="btn-primary" style="width:100%;margin-top:16px" onclick="saveGSet()">儲存</button>
+</div>
+
+<!-- ============ 附近探索:篩選 & 排序 Sheet ============ -->
+<div class="sheet-bk" id="nfBk" onclick="closeNearFilter()"></div>
+<div class="sheet" id="nfSheet">
+  <div class="sheet-hd"><h3>篩選 &amp; 排序</h3><button class="x" onclick="closeNearFilter()">&times;</button></div>
+  <div class="section-label" style="margin-top:0">搜尋範圍</div>
+  <div class="distRow" id="nearRBtns">
+    <div class="distItem"><button class="distCircle" data-r="500">0.5</button><span class="distCap">公里</span></div>
+    <div class="distItem"><button class="distCircle on" data-r="1000">1</button><span class="distCap on">公里</span></div>
+    <div class="distItem"><button class="distCircle" data-r="3000">3</button><span class="distCap">公里</span></div>
+  </div>
+  <div class="section-label">排序方式</div>
+  <div class="distRow" id="nearSortBtns">
+    <div class="distItem"><button class="distCircle sortCircle on" data-s="dist">&#128205;</button><span class="distCap on">依距離</span></div>
+    <div class="distItem"><button class="distCircle sortCircle" data-s="rating">&#9733;</button><span class="distCap">依評價</span></div>
+  </div>
+  <div class="section-label">口袋名單</div>
+  <label class="opt">
+    <input type="checkbox" id="nmMineBtn">
+    <span><b>只看口袋名單</b><br><span class="note">只顯示你已經收藏的地點,不抓其他資料</span></span>
+  </label>
+  <button class="btn-primary" style="width:100%;margin-top:16px" onclick="closeNearFilter()">套用</button>
+</div>
+
+<!-- ============ 附近探索:放大看地圖 Sheet(點開才真的載入 Google 地圖) ============ -->
+<div class="sheet-bk" id="bmBk" onclick="closeBigMap()"></div>
+<div class="sheet" id="bmSheet" style="padding:16px 16px 22px;">
+  <div class="sheet-hd" style="margin-bottom:10px;"><h3>附近地圖</h3><button class="x" onclick="closeBigMap()">&times;</button></div>
+  <div id="bigMapBox" style="height:360px;border-radius:16px;overflow:hidden;border:1px solid var(--stroke);background:var(--glass2);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12.5px;text-align:center;padding:20px;"></div>
 </div>
 
 <div class="toast" id="toast"></div>

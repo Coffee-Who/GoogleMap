@@ -96,6 +96,7 @@ function gmapsReady(){
   if($("rpHint"))$("rpHint").textContent="";
   if(typeof ensureLegTimes==="function")ensureLegTimes();
   if(typeof renderRouteMap==="function")renderRouteMap();
+  if(typeof onGmapsReadyNear==="function")onGmapsReadyNear();
 }
 function ensureGoogleMapsLoaded(){
   if(gmapsLoaded||gmapsLoading)return;

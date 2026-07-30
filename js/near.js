@@ -49,12 +49,44 @@ $("btnLoc").addEventListener("click",function(){
   $("locStat").innerHTML='<span class="spin">◌</span> 正在定位…(需要允許位置權限)';
   navigator.geolocation.getCurrentPosition(function(pos){
     myPos={lat:pos.coords.latitude,lng:pos.coords.longitude};
+    $("nearTopbar").classList.remove("idle");
+    $("ntbTitle").textContent="附近探索";
     refreshNearView();
   },function(err){
     $("btnLoc").disabled=false;
     $("locStat").textContent="無法取得位置:"+(err.code===1?"你拒絕了位置權限,請到瀏覽器設定開啟。":"請確認 GPS 已開啟後再試一次。");
   },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
 });
+function openNearFilter(){$("nfBk").classList.add("show");$("nfSheet").classList.add("show");}
+function closeNearFilter(){$("nfBk").classList.remove("show");$("nfSheet").classList.remove("show");}
+var bigMapPending=false;
+function openBigMap(){
+  if(!myPos){toast("先定位你的位置");return;}
+  $("bmBk").classList.add("show");$("bmSheet").classList.add("show");
+  if(!gKey()){
+    $("bigMapBox").innerHTML='放大看地圖需要 Google 地圖資料。<br><a href="javascript:void(0)" onclick="closeBigMap();openGSet();" style="color:var(--a-text);font-weight:700;text-decoration:underline;">前往設定加入金鑰 ›</a>';
+    return;
+  }
+  $("bigMapBox").innerHTML='<span class="spin">◌</span>&nbsp; 地圖載入中…';
+  if(gmapsLoaded)renderBigMap();
+  else{bigMapPending=true;ensureGoogleMapsLoaded();}
+}
+function renderBigMap(){
+  if(!myPos||!$("bmSheet").classList.contains("show"))return;
+  $("bigMapBox").innerHTML="";$("bigMapBox").style.display="block";
+  var map=new google.maps.Map($("bigMapBox"),{center:{lat:myPos.lat,lng:myPos.lng},zoom:15,
+    disableDefaultUI:true,zoomControl:true,gestureHandling:"greedy"});
+  new google.maps.Marker({position:myPos,map:map,zIndex:999,
+    icon:{path:google.maps.SymbolPath.CIRCLE,scale:7,fillColor:"#4C9EFF",fillOpacity:1,strokeColor:"#fff",strokeWeight:2}});
+  nearRows().forEach(function(x){
+    if(typeof x.lat!=="number"||typeof x.lng!=="number")return;
+    new google.maps.Marker({position:{lat:x.lat,lng:x.lng},map:map,title:x.name});
+  });
+}
+function onGmapsReadyNear(){
+  if(bigMapPending){bigMapPending=false;renderBigMap();}
+}
+function closeBigMap(){$("bmBk").classList.remove("show");$("bmSheet").classList.remove("show");}
 $("nearRBtns").querySelectorAll(".distCircle").forEach(function(b){
   b.addEventListener("click",function(){
     nearR=+b.dataset.r;
@@ -62,9 +94,11 @@ $("nearRBtns").querySelectorAll(".distCircle").forEach(function(b){
     $("nearRBtns").querySelectorAll(".distCap").forEach(function(x){x.classList.remove("on");});
     b.classList.add("on");
     b.nextElementSibling.classList.add("on");
+    $("frRange").textContent=b.textContent+" 公里";
     if(myPos)refreshNearView();
   });
 });
+$("btnExpandMap").addEventListener("click",function(e){e.stopPropagation();openBigMap();});
 function nearKwSearch(){
   var kw=$("nearKw").value.trim();
   if(!kw){$("nearKw").focus();return;}
@@ -82,7 +116,7 @@ function nearKwRun(kw){
   }
   $("nearKwHint").style.display="none";
   nearMode="explore";nearCatSel=[];
-  $("nmExplore").classList.add("on");$("nmMineBtn").classList.remove("on");$("nmMineCap").classList.remove("on");
+  $("nmMineBtn").checked=false;$("frMine").style.display="none";
   $("btnLoc").disabled=true;
   $("locStat").innerHTML='<span class="spin">◌</span> 正在用 Google 搜尋「'+esc(kw)+'」…';
   $("nearList").innerHTML="";
@@ -117,19 +151,20 @@ $("nearSortBtns").querySelectorAll(".sortCircle").forEach(function(b){
     $("nearSortBtns").querySelectorAll(".distCap").forEach(function(x){x.classList.remove("on");});
     b.classList.add("on");
     b.nextElementSibling.classList.add("on");
+    $("frSort").textContent=b.nextElementSibling.textContent;
     renderNear();
   });
 });
-$("nmExplore").addEventListener("click",function(){setNearMode("explore");});
-$("nmMineBtn").addEventListener("click",function(){setNearMode(nearMode==="mine"?"explore":"mine");});
+$("nmMineBtn").addEventListener("change",function(){
+  setNearMode(this.checked?"mine":"explore");
+});
 function setNearMode(m){
   nearMode=m;nearCatSel=[];
   if(m==="mine"){nearKwActive=null;$("nearKw").value="";$("nearKwHint").style.display="none";}
-  $("nmExplore").classList.toggle("on",m==="explore");
-  $("nmMineBtn").classList.toggle("on",m==="mine");
-  $("nmMineCap").classList.toggle("on",m==="mine");
+  $("nmMineBtn").checked=(m==="mine");
+  $("frMine").style.display=(m==="mine")?"inline":"none";
   if(myPos)refreshNearView();
-  else $("locStat").textContent=m==="mine"?"按上方按鈕定位後,列出你口袋名單裡離你最近的景點":"按下按鈕,列出附近的景點與美食(資料來源:OpenStreetMap)";
+  else $("locStat").textContent=m==="mine"?"按上方定位後,列出你口袋名單裡離你最近的景點":"找出附近的景點與美食(資料來源:OpenStreetMap)";
 }
 function refreshNearView(){
   if(nearMode==="explore"){
@@ -181,6 +216,10 @@ var CATICON={
 };
 var CATICON_DEF='<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
 var CATICON_ALL='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>';
+var ICR={
+  map:'<svg width="17" height="17" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 2C7.86 2 4.5 5.36 4.5 9.5c0 5.6 6.4 11.6 7.03 12.18a.7.7 0 0 0 .94 0C13.1 21.1 19.5 15.1 19.5 9.5 19.5 5.36 16.14 2 12 2z"/><circle cx="12" cy="9.5" r="3.1" fill="#fff"/></svg>',
+  tabe:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#F5860C" stroke-width="2" stroke-linecap="round"><line x1="4" y1="20" x2="17" y2="5"/><line x1="8" y1="20" x2="20" y2="7"/><circle cx="12.3" cy="11.8" r="1.4" fill="#F5860C" stroke="none"/></svg>'
+};
 function renderCatChips(rows,onChange){
   var seen=[];
   rows.forEach(function(x){if(seen.indexOf(x.cat)<0)seen.push(x.cat);});
@@ -216,13 +255,15 @@ function renderMine(){
   var show=catFilter(rows);
   $("nearList").innerHTML=show.length?show.map(function(x){
     var food=isFoodCat(x.cat);
-    return '<div class="place">'+placeThumb(x)+'<div class="place-body">'+
-    '<div class="top"><span class="name">'+esc(x.name)+'</span></div>'+
+    return '<div class="place"><div class="place-top">'+placeThumb(x)+'<div class="place-body">'+
+    '<div class="name">'+esc(x.name)+'</div>'+
     '<div class="cat-line">'+esc(x.cat)+'・'+esc(x.list)+'　'+IC.walk+' '+distTxt(x.d)+'</div>'+
-    '<div class="actions">'+
-    '<button class="btn-act map" data-map="'+attr(x.name)+'">'+IC.pin+'開地圖</button>'+
-    (food?'<button class="btn-act tabe" data-tabe="'+attr(x.name)+'">'+IC.star+'Tabelog</button>':'')+
-    '</div></div></div>';
+    '</div>'+
+    '<div class="place-actions">'+
+    '<button class="btn-round" data-map="'+attr(x.name)+'" aria-label="開Google地圖" title="開Google地圖">'+ICR.map+'</button>'+
+    (food?'<button class="btn-round" data-tabe="'+attr(x.name)+'" aria-label="Tabelog搜尋" title="Tabelog搜尋">'+ICR.tabe+'</button>':'')+
+    '</div>'+
+    '</div></div>';
   }).join(""):'<p class="empty">'+(geoBusy?"定位中,結果會陸續出現…":"這個範圍內沒有你名單裡的景點,試著加大範圍。")+'</p>';
   $("nearList").querySelectorAll("[data-map]").forEach(function(b){b.addEventListener("click",function(){gmapSearch(b.dataset.map);});});
   $("nearList").querySelectorAll("[data-tabe]").forEach(function(b){b.addEventListener("click",function(){tabelog(b.dataset.tabe);});});
@@ -334,16 +375,18 @@ function renderNear(){
     var metaLine=esc(x.cat)+'・'+distTxt(x.d)+
       (typeof x.rating==="number"?'　<span class="g-star2">★'+x.rating.toFixed(1)+'</span>':'')+
       (x.open===true?'<span class="g-open">　● 營業中</span>':(x.open===false?'<span class="g-closed">　● 已打烊</span>':''));
-    return '<div class="place">'+placeThumb({id:x.placeId||x.name,name:x.name,photoUrl:x.photoUrl})+'<div class="place-body">'+
-    '<div class="top"><span class="name">'+esc(x.name)+'</span>'+
-    (inL?'<span class="near-add on">'+IC.check+'</span>':'<button class="near-add" data-nadd="'+i+'" aria-label="加入名單">'+IC.plus+'</button>')+
-    '</div>'+
+    return '<div class="place"><div class="place-top">'+placeThumb({id:x.placeId||x.name,name:x.name,photoUrl:x.photoUrl})+
+    '<div class="place-body">'+
+    '<div class="name">'+esc(x.name)+'</div>'+
     '<div class="cat-line">'+metaLine+'</div>'+
     (x.addr?'<div class="g-addr">'+esc(x.addr)+'</div>':'')+
-    '<div class="actions">'+
-    '<button class="btn-act map" data-map="'+attr(x.name)+'">'+IC.pin+'開地圖</button>'+
-    (food?'<button class="btn-act tabe" data-tabe="'+attr(x.name)+'">'+IC.star+'Tabelog</button>':'')+
-    '</div></div></div>';
+    '</div>'+
+    '<div class="place-actions">'+
+    '<button class="btn-round" data-map="'+attr(x.name)+'" aria-label="開Google地圖" title="開Google地圖">'+ICR.map+'</button>'+
+    (food?'<button class="btn-round" data-tabe="'+attr(x.name)+'" aria-label="Tabelog搜尋" title="Tabelog搜尋">'+ICR.tabe+'</button>':'')+
+    (inL?'<span class="near-add on">'+IC.check+'</span>':'<button class="near-add" data-nadd="'+i+'" aria-label="加入名單">'+IC.plus+'</button>')+
+    '</div>'+
+    '</div></div>';
   }).join(""):'<p class="empty">這個分類附近沒有結果,換個分類或加大範圍試試。</p>';
   $("nearList").querySelectorAll("[data-map]").forEach(function(b){b.addEventListener("click",function(){gmapSearch(b.dataset.map);});});
   $("nearList").querySelectorAll("[data-tabe]").forEach(function(b){b.addEventListener("click",function(){tabelog(b.dataset.tabe);});});

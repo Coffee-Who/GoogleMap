@@ -83,12 +83,19 @@ $("btnAdd").addEventListener("click",function(){
   if(hasPlace(n)){toast("「"+n+"」已經在名單裡了");return;}
   var item={id:uid(),name:n,cat:$("inCat").value,list:$("inList").value,note:$("inNote").value.trim(),done:false};
   if($("inDur").value)item.dur=+$("inDur").value;
-  if(sheetLoc){item.lat=sheetLoc.lat;item.lng=sheetLoc.lng;}
+  /* 自動完成選到的地點最精準,優先採用;沒選就退回「目前定位」 */
+  if(inNamePlace&&inNamePlace.geometry&&inNamePlace.geometry.location){
+    item.lat=inNamePlace.geometry.location.lat();
+    item.lng=inNamePlace.geometry.location.lng();
+    if(inNamePlace.formatted_address)item.addr=inNamePlace.formatted_address;
+    if(inNamePlace.place_id)item.placeId=inNamePlace.place_id;
+  }else if(sheetLoc){item.lat=sheetLoc.lat;item.lng=sheetLoc.lng;}
   places.unshift(item);
-  sheetLoc=null;$("inLocBadge").style.display="none";
+  sheetLoc=null;inNamePlace=null;$("inLocBadge").style.display="none";
   $("inName").value="";$("inNote").value="";$("inLink").value="";$("inDur").value="";
   $("linkHint").style.display="none";
   save();renderList();closeSheet();toast("已加入「"+n+"」");
+  if(typeof queuePlacePhotos==="function")queuePlacePhotos();
 });
 $("q").addEventListener("input",function(){qText=this.value.trim();renderList();});
 $("fList").addEventListener("change",function(){curCat="全部";renderList();});

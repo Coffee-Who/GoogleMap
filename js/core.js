@@ -247,9 +247,29 @@ function openSheet(){
     sheetLoc=null;
     $("inLocBadge").style.display="none";
   }
-  $("sheetBk").classList.add("show");$("sheet").classList.add("show");setTimeout(function(){$("inName").focus();},260);
+  $("sheetBk").classList.add("show");$("sheet").classList.add("show");
+  ensureGoogleMapsLoaded();
+  inNameInitAutocomplete();
+  setTimeout(function(){$("inName").focus();},260);
 }
-function closeSheet(){$("sheetBk").classList.remove("show");$("sheet").classList.remove("show");}
+/* 新增景點:名稱欄位掛 Google 自動完成,選到地點會一併帶入座標與地址 */
+var inNamePlace=null, inNameAutoDone=false;
+function inNameInitAutocomplete(){
+  if(inNameAutoDone||!window.google||!google.maps||!google.maps.places)return;
+  inNameAutoDone=true;
+  var ac=new google.maps.places.Autocomplete($("inName"),{fields:["place_id","formatted_address","name","geometry","types"]});
+  ac.addListener("place_changed",function(){
+    inNamePlace=ac.getPlace();
+    if(typeof gTrackDetail==="function")gTrackDetail("autocomplete");
+    /* 依 Google 回傳的類型自動選分類,選不到就維持使用者原本的選擇 */
+    if(inNamePlace&&inNamePlace.types&&typeof gCat==="function"){
+      var c=gCat(inNamePlace.types,inNamePlace.name||"");
+      if(c&&cats.indexOf(c)>=0)$("inCat").value=c;
+    }
+  });
+  $("inName").addEventListener("input",function(){inNamePlace=null;});
+}
+function closeSheet(){inNamePlace=null;$("sheetBk").classList.remove("show");$("sheet").classList.remove("show");}
 $("btnParseLink").addEventListener("click",function(){
   var link=$("inLink").value.trim();
   if(!link){$("inLink").focus();return;}

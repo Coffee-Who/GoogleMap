@@ -115,7 +115,6 @@ function queuePlacePhotos(){
     }
     save();
     patchThumbDom(target);
-    renderList();
     photoQueueBusy=false;
     setTimeout(queuePlacePhotos,400);
   }, function(e){
@@ -129,9 +128,39 @@ function queuePlacePhotos(){
 }
 function patchThumbDom(x){
   var el=document.querySelector('.place-thumb[data-tid="'+x.id+'"]');
-  if(!el||!x.photoUrl)return;
-  el.style.background=""; el.style.color="";
-  el.innerHTML='<img src="'+attr(x.photoUrl)+'" alt="" loading="lazy">';
+  if(!el)return;
+  if(x.photoUrl){
+    el.style.background=""; el.style.color="";
+    el.innerHTML="";
+    var img=document.createElement("img");
+    img.alt=""; img.loading="lazy";
+    img.onerror=function(){
+      el.style.background=placeGradient(x.id||x.name);
+      if(img.parentNode)img.parentNode.removeChild(img);
+    };
+    img.src=x.photoUrl;
+    el.appendChild(img);
+  }
+  var card=el.closest(".place");
+  if(!card)return;
+  if(typeof x.rating==="number"){
+    var line=card.querySelector(".cat-line");
+    if(line&&!line.querySelector(".rate-inline")){
+      var span=document.createElement("span");
+      span.className="rate-inline";
+      span.textContent="★ "+x.rating.toFixed(1);
+      line.appendChild(span);
+    }
+  }
+  if((x.note||x.autoDesc)&&!card.querySelector(".note")){
+    var body=card.querySelector(".place-body");
+    if(body){
+      var p=document.createElement("p");
+      p.className="note";
+      p.textContent=x.note||x.autoDesc;
+      body.appendChild(p);
+    }
+  }
 }
 function googleTextSearch(query,radius,cb,err){
   var key=gKey();

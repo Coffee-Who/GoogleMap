@@ -147,8 +147,14 @@ function catBadge(c){
   return '<span class="badge" style="color:'+col+';background:'+col+'1f;">'+esc(c)+'</span>';
 }
 function placeThumb(x){
-  if(x.photoUrl)return '<div class="place-thumb" data-tid="'+attr(x.id)+'"><img src="'+attr(x.photoUrl)+'" alt="" loading="lazy"></div>';
+  if(x.photoUrl)return '<div class="place-thumb" data-tid="'+attr(x.id)+'"><img src="'+attr(x.photoUrl)+'" alt="" loading="lazy" onerror="phThumbErr(this,\''+attr(x.id||x.name)+'\')"></div>';
   return '<div class="place-thumb" data-tid="'+attr(x.id)+'" style="background:'+placeGradient(x.id||x.name)+';"></div>';
+}
+/* 縮圖載入失敗時的退場處理:拿掉壞圖,退回原本無照片時的漸層色塊,避免顯示破圖問號 */
+function phThumbErr(img,key){
+  var box=img.parentElement;
+  if(box)box.style.background=placeGradient(key);
+  if(img.parentNode)img.parentNode.removeChild(img);
 }
 
 /* ================= 分頁切換 ================= */
@@ -169,7 +175,7 @@ function renderHomeFeature(){
   var items=places.slice(-3).reverse();
   if(homeFeatureIdx>=items.length)homeFeatureIdx=0;
   var f=items[homeFeatureIdx];
-  var bg=f.photoUrl?'<div class="hf-bg"><img src="'+attr(f.photoUrl)+'" alt=""></div>':
+  var bg=f.photoUrl?'<div class="hf-bg" data-tid="'+attr(f.id||f.name)+'"><img src="'+attr(f.photoUrl)+'" alt="" onerror="phThumbErr(this,\''+attr(f.id||f.name)+'\')"></div>':
     '<div class="hf-bg" style="background:'+placeGradient(f.id||f.name)+';"></div>';
   var dots=items.length>1?'<div class="hf-dots">'+items.map(function(x,i){
     return '<button type="button" data-i="'+i+'" class="'+(i===homeFeatureIdx?"on":"")+'" aria-label="第'+(i+1)+'張"></button>';

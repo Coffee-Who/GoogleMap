@@ -74,6 +74,7 @@ function openBigMap(){
 function renderBigMap(){
   if(!myPos||!$("bmSheet").classList.contains("show"))return;
   $("bigMapBox").innerHTML="";$("bigMapBox").style.display="block";
+  gTrackDetail("mapsjs");
   var map=new google.maps.Map($("bigMapBox"),{center:{lat:myPos.lat,lng:myPos.lng},zoom:15,
     disableDefaultUI:true,zoomControl:true,gestureHandling:"greedy"});
   new google.maps.Marker({position:myPos,map:map,zIndex:999,

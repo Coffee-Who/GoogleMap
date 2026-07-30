@@ -329,6 +329,7 @@ function ppAttachAutocomplete(inp){
     fields:["place_id","formatted_address","address_components","name","geometry"]};
   var ac=new google.maps.places.Autocomplete(inp,opts);
   ac.addListener("place_changed",function(){
+    gTrackDetail("autocomplete");
     var p=ac.getPlace();
     if(p&&p.geometry&&p.geometry.location){
       inp._ppPlace={
@@ -461,6 +462,7 @@ function ppGeocode(query){
   if(cache[key])return Promise.resolve(cache[key]);
   if(!gmapsLoaded||!gmapsGeocoder)return Promise.resolve(null);
   return new Promise(function(resolve){
+    gTrackDetail("geocoding");
     gmapsGeocoder.geocode({address:query,region:"jp"},function(results,status){
       if(status!=="OK"||!results||!results.length){resolve(null);return;}
       var r=results[0];
@@ -609,8 +611,8 @@ function rpInitAutocomplete(){
   var opts={componentRestrictions:{country:"jp"},fields:["place_id","formatted_address","name","geometry"]};
   var acFrom=new google.maps.places.Autocomplete($("rpFrom"),opts);
   var acTo=new google.maps.places.Autocomplete($("rpTo"),opts);
-  acFrom.addListener("place_changed",function(){rpFromPlace=acFrom.getPlace();});
-  acTo.addListener("place_changed",function(){rpToPlace=acTo.getPlace();});
+  acFrom.addListener("place_changed",function(){rpFromPlace=acFrom.getPlace();gTrackDetail("autocomplete");});
+  acTo.addListener("place_changed",function(){rpToPlace=acTo.getPlace();gTrackDetail("autocomplete");});
   $("rpFrom").addEventListener("input",function(){rpFromPlace=null;});
   $("rpTo").addEventListener("input",function(){rpToPlace=null;});
 }

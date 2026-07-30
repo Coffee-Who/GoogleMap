@@ -2,7 +2,7 @@
 /* ================= Google Places 資料源 ================= */
 var LS_GK="pocket_gkey_v1", LS_GU="pocket_gusage_v1", LS_GR="pocket_grating_v1", LS_GC="pocket_gcap_v1";
 function gKey(){return (localStorage.getItem(LS_GK)||"").trim();}
-function gRating(){return localStorage.getItem(LS_GR)!=="0";}   /* 預設顯示評分 */
+function gRating(){var v=localStorage.getItem(LS_GR);return v===null?false:v!=="0";}   /* 預設關閉,省額度;使用者手動開過就照使用者的選擇 */
 function gCap(){var v=localStorage.getItem(LS_GC);return v===null?150:(+v||0);}
 function ymNow(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2);}
 function dayNow(){var d=new Date();return ymNow()+"-"+("0"+d.getDate()).slice(-2);}
@@ -14,6 +14,44 @@ function gUsage(){
 }
 function gBump(){var u=gUsage();u.n=(u.n||0)+1;u.dn=(u.dn||0)+1;localStorage.setItem(LS_GU,JSON.stringify(u));return u;}
 function gFreeCap(){return gRating()?1000:5000;}   /* 含評分屬 Enterprise 級,額度較少 */
+
+/* ---- 分項用量追蹤(涵蓋 App 有用到的每一種 Google 服務,免費額度依官方2026年價目表) ---- */
+var LS_GD="pocket_gusage_detail_v1";
+var G_DETAIL_CATS=[
+  {key:"nearby",         label:"附近搜尋 Nearby Search",       cap:function(){return gRating()?1000:5000;}},
+  {key:"textsearch",     label:"關鍵字/照片查詢 Text Search",   cap:function(){return gRating()?1000:5000;}},
+  {key:"photos",         label:"地點縮圖照片 Place Photos",     cap:function(){return 1000;}},
+  {key:"mapsjs",         label:"地圖顯示 Maps JavaScript",      cap:function(){return 10000;}},
+  {key:"distancematrix", label:"交通時間 Distance Matrix",      cap:function(){return 10000;}},
+  {key:"directions",     label:"路線繪製 Directions",           cap:function(){return 10000;}},
+  {key:"autocomplete",   label:"地址自動完成 Autocomplete",     cap:function(){return 10000;}},
+  {key:"geocoding",      label:"地址轉座標 Geocoding",          cap:function(){return 10000;}}
+];
+function gDetailUsage(){
+  var u;try{u=JSON.parse(localStorage.getItem(LS_GD))||{};}catch(e){u={};}
+  if(u.ym!==ymNow()){u={ym:ymNow()};}
+  G_DETAIL_CATS.forEach(function(c){if(typeof u[c.key]!=="number")u[c.key]=0;});
+  return u;
+}
+function gTrackDetail(key){
+  var u=gDetailUsage();
+  u[key]=(u[key]||0)+1;
+  localStorage.setItem(LS_GD,JSON.stringify(u));
+  if($("gsSheet")&&$("gsSheet").classList.contains("show"))renderGDetail();
+}
+function renderGDetail(){
+  var el=$("gDetail"); if(!el)return;
+  if(!gKey()){el.innerHTML="";return;}
+  var u=gDetailUsage();
+  el.innerHTML=G_DETAIL_CATS.map(function(c){
+    var used=u[c.key]||0, cap=c.cap();
+    var pct=Math.min(100,Math.round(used/cap*100));
+    var over=used>cap;
+    return '<div class="kv gd-row"><span>'+c.label+'</span>'+
+      '<span style="color:'+(over?"var(--danger)":"var(--text2)")+'">'+used.toLocaleString()+' / '+cap.toLocaleString()+'</span></div>'+
+      '<div class="q-bar" style="margin:2px 0 10px;"><i style="width:'+pct+'%'+(over?';background:var(--danger)':'')+'"></i></div>';
+  }).join("");
+}
 
 var G_TYPES=["restaurant","cafe","bakery","bar","meal_takeaway","tourist_attraction",
              "museum","park","art_gallery","shopping_mall","food_court","ice_cream_shop",
@@ -52,7 +90,7 @@ function googleNearby(radius,cb,err){
     if(!r.ok)return r.json().then(function(j){throw new Error((j.error&&j.error.message)||("HTTP "+r.status));});
     return r.json();
   }).then(function(js){
-    gBump();
+    gBump();gTrackDetail("nearby");
     var rows=(js.places||[]).map(function(p){
       var lat=p.location&&p.location.latitude, lng=p.location&&p.location.longitude;
       if(!p.displayName||!lat)return null;
@@ -80,11 +118,12 @@ function googlePlacePhoto(name,hint,cb,err){
     if(!r.ok)return r.json().then(function(j){throw new Error((j.error&&j.error.message)||("HTTP "+r.status));});
     return r.json();
   }).then(function(js){
-    gBump();
+    gBump();gTrackDetail("textsearch");
     var p=(js.places||[])[0];
     if(!p){cb(null);return;}
     var photoName=p.photos&&p.photos[0]&&p.photos[0].name;
     var url=photoName?("https://places.googleapis.com/v1/"+photoName+"/media?maxWidthPx=300&key="+encodeURIComponent(key)):null;
+    if(url)gTrackDetail("photos");
     var desc=p.editorialSummary&&p.editorialSummary.overview?p.editorialSummary.overview:null;
     var rating=typeof p.rating==="number"?p.rating:null;
     cb({placeId:p.id||null, photoUrl:url, autoDesc:desc, rating:rating});
@@ -181,7 +220,7 @@ function googleTextSearch(query,radius,cb,err){
     if(!r.ok)return r.json().then(function(j){throw new Error((j.error&&j.error.message)||("HTTP "+r.status));});
     return r.json();
   }).then(function(js){
-    gBump();
+    gBump();gTrackDetail("textsearch");
     var rows=(js.places||[]).map(function(p){
       var lat=p.location&&p.location.latitude, lng=p.location&&p.location.longitude;
       if(!p.displayName||!lat)return null;
@@ -225,6 +264,7 @@ function openGSet(){
       '<div class="kv"><span>免費額度依據</span><span>'+(gRating()?"含評分 1,000 次/月":"不含評分 5,000 次/月")+'</span></div>'+
       '<div class="kv"><span>預估費用</span><span style="color:'+((u.n||0)<=cap?"var(--ok)":"var(--danger)")+'">'+((u.n||0)<=cap?"$0":"已超出免費額度")+'</span></div>'
     : '<p class="note" style="margin:0">尚未設定金鑰,目前使用免費的 OpenStreetMap(無次數限制)。<br>設定金鑰後,這裡會顯示本月剩餘的免費查詢次數。</p>';
+  renderGDetail();
   $("gsBk").classList.add("show");$("gsSheet").classList.add("show");
 }
 function closeGSet(){$("gsBk").classList.remove("show");$("gsSheet").classList.remove("show");}

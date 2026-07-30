@@ -380,6 +380,7 @@ function ensureLegTimes(){
     var tmode=lm==="walking"?google.maps.TravelMode.WALKING:
       lm==="transit"?google.maps.TravelMode.TRANSIT:google.maps.TravelMode.DRIVING;
     var svc=new google.maps.DistanceMatrixService();
+    gTrackDetail("distancematrix");
     svc.getDistanceMatrix({origins:origins,destinations:destinations,travelMode:tmode},function(res,status){
       idxs.forEach(function(i,j){
         var el=(status==="OK"&&res&&res.rows[j]&&res.rows[j].elements[j]);
@@ -440,6 +441,7 @@ function renderRouteMap(){
     if(!canvas)return;
     if(!valid.length){$("rMapBox").innerHTML='<p class="empty" style="margin:0;padding:70px 10px 0;">找不到座標,請確認站名拼字,或到「資料來源設定」貼上 Google API 金鑰。</p>';return;}
     rMap=new google.maps.Map(canvas,{center:{lat:valid[0].c.lat,lng:valid[0].c.lng},zoom:12,disableDefaultUI:true,zoomControl:true,gestureHandling:"greedy"});
+    gTrackDetail("mapsjs");
     rMapClearOverlays();
     var bounds=new google.maps.LatLngBounds();
     valid.forEach(function(v){
@@ -465,6 +467,7 @@ function drawRouteMapPath(valid,sig){
   }
   if(mode==="transit"||latlngs.length>10){fallbackDashedLine();return;}
   var svc=new google.maps.DirectionsService();
+  gTrackDetail("directions");
   var tmode=mode==="walking"?google.maps.TravelMode.WALKING:google.maps.TravelMode.DRIVING;
   var origin=latlngs[0],dest=latlngs[latlngs.length-1],wp=latlngs.slice(1,-1).map(function(l){return{location:l,stopover:true};});
   svc.route({origin:origin,destination:dest,waypoints:wp,travelMode:tmode,optimizeWaypoints:false},function(res,status){
@@ -563,7 +566,7 @@ function tmpInitAutocomplete(){
   tmpAutoDone=true;
   var opts={componentRestrictions:{country:"jp"},fields:["place_id","formatted_address","name","geometry"]};
   var ac=new google.maps.places.Autocomplete($("tmpName"),opts);
-  ac.addListener("place_changed",function(){tmpPlace=ac.getPlace();});
+  ac.addListener("place_changed",function(){tmpPlace=ac.getPlace();gTrackDetail("autocomplete");});
   $("tmpName").addEventListener("input",function(){tmpPlace=null;});
 }
 $("tmpName").addEventListener("focus",function(){ensureGoogleMapsLoaded();});

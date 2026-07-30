@@ -485,6 +485,18 @@
   <button class="btn-primary" style="width:100%;margin-top:16px" onclick="closeNearFilter()">套用</button>
 </div>
 
+<!-- ============ 行程:編輯地點名稱(自訂面板 + Google 自動完成) ============ -->
+<div class="sheet-bk" id="esBk" onclick="closeEditStop()"></div>
+<div class="sheet" id="esSheet">
+  <div class="sheet-hd"><h3>編輯地點名稱</h3><button class="x" onclick="closeEditStop()">&times;</button></div>
+  <input type="text" id="esInput" placeholder="輸入地點(車站、飯店、景點…)" autocomplete="off" style="margin-bottom:6px">
+  <p class="note" id="esHint" style="margin:0">開始打字會出現 Google 建議,選一個就會自動帶入完整地點。</p>
+  <div class="row" style="margin-top:16px;gap:8px;">
+    <button class="btn-sm" style="flex:1" onclick="closeEditStop()">取消</button>
+    <button class="btn-primary" style="flex:2;margin:0" onclick="saveEditStop()">儲存</button>
+  </div>
+</div>
+
 <!-- ============ 附近探索:放大看地圖 Sheet(點開才真的載入 Google 地圖) ============ -->
 <div class="sheet-bk" id="bmBk" onclick="closeBigMap()"></div>
 <div class="sheet" id="bmSheet" style="padding:16px 16px 22px;">

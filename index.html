@@ -432,6 +432,10 @@
   <div class="sheet-hd"><h3>資料來源設定</h3><button class="x" onclick="closeGSet()">&times;</button></div>
   <div id="gStat" style="margin-bottom:14px"></div>
 
+  <div class="section-label" style="margin-top:0">各項服務用量(本月)</div>
+  <div id="gDetail" style="margin-bottom:6px"></div>
+  <p class="note" style="margin:0 0 14px">這些是 App 這次更新後才開始追蹤的項目(附近搜尋、照片、地圖顯示、路線規劃、自動完成、地理編碼各自獨立計算),供你參考大概用量,不是 Google 官方帳單的精確數字——實際扣款仍以 Google Cloud Console 的帳單為準。</p>
+
   <div class="section-label">Google Places API 金鑰</div>
   <input type="password" id="gkInput" placeholder="貼上金鑰,留空則用 OpenStreetMap" style="margin-bottom:8px">
   <p class="note">🔒 金鑰只存在這支手機的瀏覽器,不會上傳、不會進到 GitHub。</p>

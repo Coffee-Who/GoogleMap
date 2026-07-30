@@ -235,7 +235,9 @@ function renderRoutePick(){
 }
 var expandedStop=null, dayListCollapsed=false;
 function stopAddr(s){
-  if(!s||!s.pid)return "";
+  if(!s)return "";
+  if(s.addr)return s.addr;   /* 臨時點:自動完成選到的地點會直接帶地址 */
+  if(!s.pid)return "";
   var p=places.filter(function(x){return x.id===s.pid;})[0];
   return (p&&p.addr)?p.addr:"";
 }
@@ -247,12 +249,47 @@ function toggleStopExpand(i){
   expandedStop=(expandedStop===i)?null:i;
   renderRoute();
 }
+var esIdx=null, esPlace=null, esAutoDone=false;
 function editStop(i){
   var s=route[i]; if(!s)return;
-  var val=prompt("編輯地點名稱",s.name);
-  if(val===null)return;
-  val=val.trim(); if(!val)return;
-  route[i]={name:val,pid:null,tmp:true};
+  esIdx=i; esPlace=null;
+  $("esInput").value=s.name||"";
+  $("esBk").classList.add("show");
+  $("esSheet").classList.add("show");
+  ensureGoogleMapsLoaded();
+  esInitAutocomplete();
+  setTimeout(function(){$("esInput").focus();$("esInput").select();},250);
+}
+function esInitAutocomplete(){
+  if(esAutoDone||!window.google||!google.maps||!google.maps.places)return;
+  esAutoDone=true;
+  var opts={fields:["place_id","formatted_address","name","geometry"]};
+  var ac=new google.maps.places.Autocomplete($("esInput"),opts);
+  ac.addListener("place_changed",function(){esPlace=ac.getPlace();gTrackDetail("autocomplete");});
+  $("esInput").addEventListener("input",function(){esPlace=null;});
+  $("esInput").addEventListener("keydown",function(e){
+    /* 從自動完成清單選字時會送出 keyCode 13,交給 Google 處理,不要當成送出 */
+    if(e.key==="Enter"&&!e.isComposing){e.preventDefault();}
+  });
+}
+function closeEditStop(){
+  $("esBk").classList.remove("show");
+  $("esSheet").classList.remove("show");
+  esIdx=null;esPlace=null;
+}
+function saveEditStop(){
+  if(esIdx===null)return;
+  var val=$("esInput").value.trim();
+  if(!val){toast("請輸入地點名稱");return;}
+  var item={name:val,pid:null,tmp:true};
+  if(esPlace&&esPlace.geometry&&esPlace.geometry.location){
+    item.lat=esPlace.geometry.location.lat();
+    item.lng=esPlace.geometry.location.lng();
+    if(esPlace.name)item.name=esPlace.name;
+    if(esPlace.formatted_address)item.addr=esPlace.formatted_address;
+  }
+  route[esIdx]=item;
+  closeEditStop();
   expandedStop=null;
   doneLeg={};syncDayFromRoute();renderTripEditor();
 }

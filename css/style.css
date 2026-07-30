@@ -305,12 +305,49 @@ html[data-theme="light"] .near-mapprev{background:linear-gradient(150deg,#dbe7f2
   border:3px solid #fff;box-shadow:0 0 0 5px rgba(76,158,255,.28);left:50%;top:50%;transform:translate(-50%,-50%);}
 #nearList .place{gap:10px;padding:9px 10px;}
 #nearList .place-thumb{width:44px;height:44px;border-radius:11px;font-size:18px;}
+#nearList .place .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
 #nearList .place .cat-line{font-size:10.5px;color:var(--muted);margin-top:1px;display:flex;align-items:center;gap:5px;}
 #nearList .place .cat-line .g-star2{color:var(--accent);font-weight:800;}
 #nearList .near-add{width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--on-accent);
-  border:none;padding:0;min-height:0;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:auto;}
+  border:none;padding:0;min-height:0;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 #nearList .near-add.on{background:var(--ok-bg);color:var(--ok);}
 #nearOut{gap:8px;}
+
+/* ---- 合併後的定位/設定條(取代原本的探索新地點 chip + srcBar + 定位我的位置按鈕) ---- */
+.near-topbar{display:flex;align-items:center;gap:10px;background:var(--glass);border:1px solid var(--stroke);
+  border-radius:16px;padding:10px 10px 10px 12px;margin:0 0 12px;}
+.ntb-dot{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:var(--a-grad);color:var(--on-accent);}
+.near-topbar.idle .ntb-dot{background:var(--glass2);color:var(--muted);}
+.ntb-body{flex:1;min-width:0;background:none;border:none;padding:0;text-align:left;font:inherit;color:inherit;
+  display:flex;flex-direction:column;gap:2px;cursor:pointer;min-height:0;}
+.ntb-body:disabled{opacity:.6;}
+.ntb-title{font-size:14.5px;font-weight:800;color:var(--text);}
+.ntb-sub{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ntb-gear{width:34px;height:34px;border-radius:11px;border:1px solid var(--stroke);background:var(--glass2);
+  display:flex;align-items:center;justify-content:center;color:var(--text2);flex-shrink:0;padding:0;min-height:0;}
+
+/* ---- 篩選狀態列(點擊開啟篩選 sheet) ---- */
+.filter-row{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px;cursor:pointer;}
+.filter-row .fr-txt{font-size:12px;color:var(--muted);}
+.filter-row .fr-txt b{color:var(--text2);font-weight:700;}
+.filter-row .fr-link{color:var(--a-text);font-weight:700;}
+
+/* ---- 地圖預覽的標籤與放大按鈕 ---- */
+.near-mapprev{cursor:default;}
+.np-tag{position:absolute;left:10px;top:10px;font-size:10.5px;color:var(--muted);
+  background:rgba(0,0,0,.35);padding:3px 8px;border-radius:99px;}
+.np-expand{position:absolute;right:10px;bottom:10px;width:36px;height:36px;border-radius:50%;border:none;
+  background:rgba(16,31,48,.85);backdrop-filter:blur(6px);color:var(--text);display:flex;align-items:center;
+  justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.35);padding:0;min-height:0;}
+
+/* ---- 地點卡片:縮圖 + 名稱 + 圓形操作按鈕全部同一排 ---- */
+#nearList .place{align-items:center;}
+#nearList .place-top{display:flex;gap:9px;align-items:center;width:100%;}
+#nearList .place-body{flex:1;min-width:0;}
+#nearList .place-actions{display:flex;gap:6px;flex-shrink:0;align-items:center;}
+#nearList .btn-round{width:30px;height:30px;border-radius:50%;border:none;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;padding:0;min-height:0;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.22);}
 #nearOut .btn-sm{flex:1;border-radius:11px;font-weight:800;}
 #nearOut #btnGNear{color:var(--accent);background:var(--accent-bg);border:1px solid var(--a-line);}
 #nearOut #btnTabeNear{color:var(--text);background:var(--glass);border:1px solid var(--stroke);}

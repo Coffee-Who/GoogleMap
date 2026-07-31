@@ -293,6 +293,40 @@ function stopThumb(s,p){
   return '<div class="stop2-thumb" style="background:'+placeGradient(key)+';"></div>';
 }
 /* 臨時地點(不在口袋名單裡)也去抓一次 Google 的照片與簡介,存在該停靠點自己身上 */
+/* 舊行程裡的停靠點在「自動抓 Google 照片」這個功能之前就建立了,身上沒有 photoUrl,
+   以前只有新增/編輯地點時才會去抓,所以永遠是灰色漸層。這裡在畫面渲染後補抓一次:
+   一次只抓一個、每個地點只試一次,避免瞬間打爆 Places API 額度。 */
+var photoTried={}, stopPhotoBusy=false;
+function backfillStopPhotos(){
+  if(stopPhotoBusy)return;
+  if(!gKey()||typeof googlePlacePhoto!=="function")return;
+  for(var i=0;i<route.length;i++){
+    var s=route[i];
+    if(!s||!s.name)continue;
+    if(s.photoUrl)continue;
+    if(stopPlace(s))continue;              /* 口袋景點本身有照片,走原本的流程 */
+    var k=s.pid||s.name;
+    if(photoTried[k])continue;
+    photoTried[k]=true;
+    stopPhotoBusy=true;
+    (function(name,idx){
+      googlePlacePhoto(name,"",function(res){
+        stopPhotoBusy=false;
+        var t=route[idx];
+        if(t&&res&&t.name===name){
+          if(res.photoUrl)t.photoUrl=res.photoUrl;
+          if(res.autoDesc)t.autoDesc=res.autoDesc;
+          if(res.photoUrl||res.autoDesc){syncDayFromRoute();renderRoute();return;}
+        }
+        backfillStopPhotos();              /* 這個沒抓到就換下一個 */
+      },function(){
+        stopPhotoBusy=false;
+        backfillStopPhotos();
+      });
+    })(s.name,i);
+    return;
+  }
+}
 function fetchStopPhoto(idx,name){
   if(!gKey()||typeof googlePlacePhoto!=="function")return;
   googlePlacePhoto(name,"",function(res){
@@ -407,7 +441,9 @@ function renderRoute(){
     var legHtml="";
     if(hasNext){
       var lm=legMode(i);
-      legHtml='<div class="stop2-connector"><button type="button" class="leg-badge" data-leg2="'+i+'" id="legbadge-'+i+'" title="'+attr(LEG_MODE_LABEL[lm]+" · 點一下切換")+'">'+LEG_MODE_ICON[lm]+'</button></div>';
+      legHtml='<div class="stop2-connector"><span class="seg"></span>'+
+        '<button type="button" class="leg-badge" data-leg2="'+i+'" id="legbadge-'+i+'" title="'+attr(LEG_MODE_LABEL[lm]+" · 點一下切換")+'">'+LEG_MODE_ICON[lm]+'</button>'+
+        '<span class="seg"></span></div>';
     }
     var card='<div class="stop2" data-i="'+i+'">'+
       '<div class="stop2-line"><div class="stop2-time'+(timeVal?" set":"")+'">'+(timeVal?esc(timeVal):"--:--")+'</div>'+
@@ -422,7 +458,8 @@ function renderRoute(){
             '</div>'+
             (meta?'<div class="stop2-meta">'+meta+'</div>':'')+
           '</div>'+
-          '<div class="stop2-thumbwrap">'+thumbHtml+
+          thumbHtml+
+          '<div class="stop2-morewrap">'+
             '<button type="button" class="stop2-menubtn" data-menu="'+i+'" aria-label="更多">⋯</button>'+
             (openMenuIdx===i?moveMenuHtml(i):'')+
           '</div>'+
@@ -434,7 +471,7 @@ function renderRoute(){
   }).join(""):'<p class="empty">還沒有停靠點,按上方「＋」新增。</p>');
   $("routeOrder").querySelectorAll("[data-toggle]").forEach(function(el){
     el.addEventListener("click",function(e){
-      if(e.target.closest(".stop2-thumbwrap")||e.target.closest(".addr-toggle"))return;
+      if(e.target.closest(".stop2-morewrap")||e.target.closest(".stop2-editbtn")||e.target.closest(".addr-toggle"))return;
       toggleStopExpand(+el.dataset.toggle);
     });
   });
@@ -489,6 +526,7 @@ function renderRoute(){
   $("maxNote").style.display=(!anyTransit&&!mixed&&route.length>9)?"block":"none";
   renderGo();
   ensureLegTimes();
+  backfillStopPhotos();
   if(typeof renderRouteMap==="function")renderRouteMap();
 }
 if($("dayLabel"))$("dayLabel").addEventListener("click",function(e){

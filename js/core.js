@@ -216,7 +216,11 @@ function goPage(p){
   $("page-"+p).classList.add("active");
   $("fabAdd").style.display=(p==="list"||p==="near")?"flex":"none";
   if(p!=="metro"){document.body.classList.remove("mFsOn");var fb=$("mFs");if(fb){fb.innerHTML="&#9974;";fb.title="全螢幕";}}
-  if(p==="route"){if(curTrip){renderTripEditor();}else{showTripScreen("overview");renderTripList();}}
+  if(p==="route"){
+    if(curTrip){renderTripEditor();}
+    else if(trips.length){openTrip(trips[0].id);}
+    else{showTripScreen("overview");renderTripList();}
+  }
   if(p==="near"){try{renderSrcBar();}catch(e){}}
   if(p==="metro"){ if(!mSvg){mMeasure();mInit();} else {mMeasure();mApply();} }
   if(p==="home"){renderHero();renderHomeFeature();renderHomeRecent();if($("stSettingsCount"))$("stSettingsCount").textContent="共 "+places.length+" 個地點・"+lists.length+" 個清單";}

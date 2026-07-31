@@ -97,9 +97,41 @@ function renderTripEditor(){
   $("dayLabelChev").textContent=dayListCollapsed?"▸":"▾";
   renderRoute();
 }
-$("btnTripBack").addEventListener("click",function(){
-  syncDayFromRoute(); curTrip=null; showTripScreen("overview"); renderTripList();
-});
+function renderTripPop(){
+  var pop=$("tripPop"); if(!pop)return;
+  pop.innerHTML=trips.map(function(t){
+    var n=t.days.reduce(function(a,d){return a+d.stops.length;},0);
+    return '<div class="item'+(t.id===curTrip?" on":"")+'" data-id="'+attr(t.id)+'">'+
+      '<div><div class="nm">'+esc(t.name)+'</div><div class="dt">'+esc(tripRangeStr(t))+(n?" · 共 "+n+" 個地點":"")+'</div></div>'+
+      (t.id===curTrip?'<span style="color:var(--accent);">✓</span>':'')+
+    '</div>';
+  }).join("")+'<div class="newbtn" id="tripPopNew">＋ 建立新行程</div>';
+  pop.querySelectorAll(".item").forEach(function(el){
+    el.addEventListener("click",function(e){
+      e.stopPropagation();
+      closeTripPop();
+      if(el.dataset.id!==curTrip){syncDayFromRoute();openTrip(el.dataset.id);}
+    });
+  });
+  var nb=$("tripPopNew");
+  if(nb)nb.addEventListener("click",function(e){e.stopPropagation();closeTripPop();newTripFlow();});
+}
+function toggleTripPop(e){
+  if(e)e.stopPropagation();
+  var pop=$("tripPop"), dd=$("tripDropdown");
+  if(!pop||!dd)return;
+  var show=!pop.classList.contains("show");
+  if(show)renderTripPop();
+  pop.classList.toggle("show",show);
+  dd.classList.toggle("open",show);
+}
+function closeTripPop(){
+  var pop=$("tripPop"), dd=$("tripDropdown");
+  if(pop)pop.classList.remove("show");
+  if(dd)dd.classList.remove("open");
+}
+if($("tripDropdown"))$("tripDropdown").addEventListener("click",toggleTripPop);
+document.addEventListener("click",closeTripPop);
 $("btnNewTrip").addEventListener("click",function(){newTripFlow();});
 $("btnTripEdit").addEventListener("click",function(){editTripFlow();});
 var tfMode="new", tfDays=3;
@@ -165,7 +197,8 @@ $("tfDelete").addEventListener("click",function(){
   var t=curTripObj(); if(!t)return;
   if(!confirm("要刪除「"+t.name+"」這個行程嗎?此動作無法復原。"))return;
   trips=trips.filter(function(x){return x.id!==t.id;});
-  saveTrips(); curTrip=null; closeTripForm(); showTripScreen("overview"); renderTripList();
+  saveTrips(); curTrip=null; closeTripForm();
+  if(trips.length){openTrip(trips[0].id);}else{showTripScreen("overview"); renderTripList();}
 });
 function newTripFlow(){openTripForm("new");}
 function editTripFlow(){openTripForm("edit");}
@@ -344,10 +377,9 @@ function saveEditStop(){
   doneLeg={};syncDayFromRoute();renderTripEditor();
   if(!stopPlace(item))fetchStopPhoto(idx,item.name);
 }
-function stopMenuHtml(i){
+function moveMenuHtml(i){
   var upDis=i===0, downDis=i===route.length-1;
   return '<div class="stop-menu">'+
-    '<button type="button" data-edit="'+i+'">'+IC.edit+'<span>編輯</span></button>'+
     '<button type="button" data-mv="'+i+',-1"'+(upDis?' disabled':'')+'>↑<span>往上移</span></button>'+
     '<button type="button" data-mv="'+i+',1"'+(downDis?' disabled':'')+'>↓<span>往下移</span></button>'+
     '<button type="button" class="del" data-rm="'+i+'">'+IC.x+'<span>刪除</span></button>'+
@@ -357,10 +389,6 @@ function renderRoute(){
   if(expandedStop!=null&&expandedStop>=route.length)expandedStop=null;
   if(openMenuIdx!=null&&openMenuIdx>=route.length)openMenuIdx=null;
   $("routeOrder").innerHTML=
-  '<div class="stop start" id="startRow">'+
-  '<span class="num">'+(useCur?"起":"—")+'</span>'+
-  '<span class="n" style="color:var(--text2);font-weight:400;">'+(useCur?"目前位置":"不用目前位置,直接從第 1 站出發")+'</span>'+
-  '<span style="font-size:11.5px;color:var(--accent);white-space:nowrap;">點一下切換</span></div>'+
   (route.length?route.map(function(s,i){
     var exp=expandedStop===i;
     var addr=stopAddr(s);
@@ -380,31 +408,32 @@ function renderRoute(){
     var thumbHtml=stopThumb(s,p);
     var hasNext=i<route.length-1;
     var timeVal=s.time||"";
+    var legHtml="";
+    if(hasNext){
+      var lm=legMode(i);
+      legHtml='<div class="stop2-connector"><button type="button" class="leg-badge" data-leg2="'+i+'" id="legbadge-'+i+'" title="'+attr(LEG_MODE_LABEL[lm]+" · 點一下切換")+'">'+LEG_MODE_ICON[lm]+'</button></div>';
+    }
     var card='<div class="stop2" data-i="'+i+'">'+
       '<div class="stop2-line"><div class="stop2-time'+(timeVal?" set":"")+'">'+(timeVal?esc(timeVal):"--:--")+'</div>'+
-      '<span class="dot"></span>'+(hasNext?'<span class="bar"></span>':'')+'</div>'+
+      '<span class="dot"></span>'+legHtml+'</div>'+
       '<div class="stop2-right">'+
       '<div class="stop2-card" data-toggle="'+i+'">'+
         '<div class="stop2-main">'+
           '<div style="flex:1;min-width:0;">'+
-            '<div class="stop2-name">'+esc(s.name)+'</div>'+
-            (catLine?'<div class="stop2-catdur">'+catLine+'</div>':'')+
+            '<div class="stop2-nameblock">'+
+              '<div class="stop2-nameline"><span class="stop2-name">'+esc(s.name)+'</span>'+(catLine?'<span class="stop2-catdur">'+catLine+'</span>':'')+'</div>'+
+              '<button type="button" class="stop2-editbtn" data-edit="'+i+'" aria-label="編輯地點/時間">⋯</button>'+
+            '</div>'+
             (meta?'<div class="stop2-meta">'+meta+'</div>':'')+
           '</div>'+
           '<div class="stop2-thumbwrap">'+thumbHtml+
             '<button type="button" class="stop2-menubtn" data-menu="'+i+'" aria-label="更多">⋯</button>'+
-            (openMenuIdx===i?stopMenuHtml(i):'')+
+            (openMenuIdx===i?moveMenuHtml(i):'')+
           '</div>'+
         '</div>'+
       '</div>'+
+      '</div>'+
       '</div>';
-    if(hasNext){
-      var lm=legMode(i);
-      card+='<button type="button" class="legrow" data-leg2="'+i+'" title="點一下切換這段的交通方式">'+
-        '<span class="ic">'+LEG_MODE_ICON[lm]+'</span><span>'+LEG_MODE_LABEL[lm]+'</span>'+
-        '<span class="tm" id="legt-'+i+'">· …</span><span class="chev">▾</span></button>';
-    }
-    card+='</div>';
     return card;
   }).join(""):'<p class="empty">還沒有停靠點,按上方「＋」新增。</p>');
   $("routeOrder").querySelectorAll("[data-toggle]").forEach(function(el){
@@ -453,7 +482,6 @@ function renderRoute(){
       doneLeg={};syncDayFromRoute();renderRoute();
     });
   });
-  $("startRow").addEventListener("click",function(){useCur=!useCur;doneLeg={};syncDayFromRoute();renderRoute();});
   var anyTransit=route.some(function(s,i){return i<route.length-1&&legMode(i)==="transit";});
   var mixed=(function(){
     if(route.length<2)return false;
@@ -488,7 +516,10 @@ function legKey(){
 function applyLegTimes(){
   var key=legKey(); var c=key&&rsCache[key];
   if(!c||!c.legs)return;
-  c.legs.forEach(function(t,i){var el=$("legt-"+i); if(el)el.textContent="· "+(t||"…");});
+  c.legs.forEach(function(t,i){
+    var el=$("legbadge-"+i);
+    if(el){var lm=legMode(i); el.title=LEG_MODE_LABEL[lm]+" · "+(t||"…")+"(點一下切換)";}
+  });
 }
 function ensureLegTimes(){
   var key=legKey();

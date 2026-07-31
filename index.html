@@ -83,20 +83,23 @@
 
 <!-- ============ 頁 2:路線規劃 ============ -->
 <section class="page" id="page-route">
+  <div class="section-label" style="margin-top:0;">行程規劃</div>
+
   <div id="tripOverview">
-    <div class="section-label" style="margin-top:0;">我的行程</div>
     <div id="tripList"></div>
     <button class="newtrip" id="btnNewTrip">＋ 建立新行程</button>
   </div>
 
   <div id="tripEditor" style="display:none;">
-    <div class="trip-hd">
-      <button class="pp-back" id="btnTripBack">&larr; 行程列表</button>
-      <div class="trip-namewrap" style="flex:1;min-width:0">
-        <div class="trip-nm" id="tripName"></div>
-        <div class="trip-dt" id="tripDates"></div>
+    <div class="trip-poplist">
+      <div class="trip-hd2">
+        <div class="trip-dropdown" id="tripDropdown">
+          <div class="txt"><span class="nm" id="tripName"></span><span class="dt" id="tripDates"></span></div>
+          <span class="chev" id="tripDropdownChev">▾</span>
+        </div>
+        <button class="btn-icon" id="btnTripEdit" title="編輯行程">✎</button>
       </div>
-      <button class="btn-icon" id="btnTripEdit" title="編輯行程">✎</button>
+      <div class="trip-pop" id="tripPop"></div>
     </div>
     <div class="days" id="dayTabs"></div>
 

@@ -126,50 +126,35 @@ button:active{transform:scale(.98);}
 .legrow .chev{color:var(--muted); font-size:10px; margin-left:1px;}
 .stop2{display:flex; align-items:stretch; gap:10px; margin:0 0 8px;}
 .stop2:last-child{margin-bottom:0;}
-.stop2-line{display:flex; flex-direction:column; align-items:center; flex-shrink:0; width:46px;}
-.stop2-time{width:44px; height:26px; border:1px dashed var(--stroke2); border-radius:8px; background:transparent;
-  color:var(--muted); font-size:11px; font-weight:700; text-align:center; padding:0; -webkit-appearance:none;}
-.stop2-time.set{border-style:solid; border-color:var(--accent); color:var(--accent);}
-.stop2-time::-webkit-calendar-picker-indicator{display:none;}
-.stop2-desc{font-size:12.5px; color:var(--text2); line-height:1.6; margin-top:4px;}
+.stop2-line{display:flex; flex-direction:column; align-items:center; flex-shrink:0; width:40px;}
+.stop2-time{font-size:12.5px; font-weight:700; color:var(--muted); margin-bottom:4px; white-space:nowrap;}
+.stop2-time.set{color:var(--accent);}
+.stop2-desc{font-size:12.5px; color:var(--text2); line-height:1.6; margin-top:6px;}
 .addr-toggle{background:none; border:none; padding:0; margin-top:6px; font-size:11.5px; color:var(--accent);
   display:inline-flex; align-items:center; gap:3px;}
-.stop2-line .bar{flex:1; width:2px; background:var(--stroke2); margin:5px 0; min-height:6px; border-radius:1px;}
+.stop2-line .dot{width:9px; height:9px; border-radius:50%; background:var(--accent); flex-shrink:0;}
+.stop2-line .bar{flex:1; width:2px; background:var(--stroke2); margin-top:5px; min-height:6px; border-radius:1px;}
 .stop2-right{flex:1; min-width:0; display:flex; flex-direction:column;}
-.stop2 .num2{flex-shrink:0; margin-top:0; width:26px; height:26px; border-radius:50%;
-  background:var(--accent); color:var(--on-accent); font-size:12px; font-weight:800;
-  display:flex; align-items:center; justify-content:center;}
-.stop2 .num2.tmp{background:var(--accent); color:var(--on-accent);} /* 統一實心圓,不再用虛線圈 */
-.stop2-card{flex:1; min-width:0; display:flex; border:1px solid transparent; border-radius:12px; overflow:hidden; background:none;}
-.stop2-card.exp{border-color:var(--accent); background:var(--card);}
-.stop2-main{flex:1; min-width:0; padding:6px 0; display:flex; align-items:flex-start; gap:10px;}
-.stop2-thumb{width:48px;height:48px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;overflow:hidden;background:var(--glass2);}
+.stop2-card{flex:1; min-width:0; border-radius:12px; padding:2px 0;}
+.stop2-main{flex:1; min-width:0; display:flex; align-items:center; gap:10px; cursor:pointer;}
+.stop2-thumbwrap{position:relative; flex-shrink:0;}
+.stop2-thumb{width:84px;height:62px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--glass2);}
 .stop2-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .stop2-thumb svg{width:18px;height:18px;}
-.stop2-name{font-size:16px; font-weight:800;}
-.stop2-meta{margin-top:5px; display:flex; flex-direction:column; gap:3px;}
+.stop2-menubtn{position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%;
+  background:var(--card); border:1px solid var(--stroke2); color:var(--text2); font-size:12px;
+  display:flex; align-items:center; justify-content:center; padding:0; line-height:1;}
+.stop-menu{position:absolute; top:16px; right:0; z-index:5; min-width:130px; background:var(--card);
+  border:1px solid var(--stroke2); border-radius:10px; padding:4px; box-shadow:0 6px 18px rgba(0,0,0,.28);}
+.stop-menu button{display:flex; align-items:center; gap:8px; width:100%; text-align:left; background:none;
+  border:none; padding:8px 8px; font-size:13.5px; color:var(--text); border-radius:6px;}
+.stop-menu button:disabled{color:var(--border); pointer-events:none;}
+.stop-menu button.del{color:#e0847e;}
+.stop2-name{font-size:14.5px; font-weight:700;}
+.stop2-meta{margin-top:0;}
 .stop2-addr{font-size:11px; color:var(--muted); margin-top:4px;}
-.stop2-row2{display:flex; align-items:center; gap:7px; flex-wrap:wrap;}
-.stop2-catdur{font-size:11.5px; color:var(--muted); margin-top:2px;}
-.stop2-cat{font-size:10.5px; background:var(--accent-bg); color:var(--warn); border:1px solid var(--warn-border);
-  border-radius:999px; padding:2px 8px; font-weight:700;}
+.stop2-catdur{font-size:12px; color:var(--muted); margin-top:3px;}
 .stop2-note{font-size:12px; color:var(--text2); margin-top:2px;}
-.stop2-arrows2{display:flex; gap:10px; margin-top:8px;}
-.stop2-ic{background:none; border:none; padding:4px; font-size:13px; color:var(--text2); flex-shrink:0; line-height:1;}
-.stop2-ic.off{color:var(--border); pointer-events:none;}
-.stop2-ic.on{color:var(--accent);}
-.stop2-more{font-size:16px; letter-spacing:1px;}
-.stop2-actions{width:52px; flex-shrink:0; background:var(--accent); display:flex; flex-direction:column;
-  align-items:center; justify-content:center; gap:10px;}
-.stop2-actions button{background:none; border:none; color:var(--on-accent); font-size:16px; padding:6px;}
-.stop2-actions button.del{color:#712b13;}
-/* 臨時地點:輸入框 + 加入 + 加入口袋名單 同一排 */
-.tmpwrap{display:flex; gap:6px; margin:16px 0 4px; padding-top:14px; border-top:1px solid var(--border);}
-.tmpwrap input{flex:1; min-width:0;}
-.tmpbtnrow{display:flex; gap:6px; flex-shrink:0;}
-.tmp-btn{background:var(--card2); border:1px solid var(--border); border-radius:14px; color:var(--text);
-  font:inherit; font-size:12.5px; font-weight:700; padding:0 12px; min-height:40px; white-space:nowrap;}
-.tmp-btn.primary{background:var(--accent); color:var(--on-accent); border-color:var(--accent);}
 nav{
   position:fixed; bottom:0; left:0; right:0; z-index:20;
   background:var(--nav); border-top:1px solid var(--border);

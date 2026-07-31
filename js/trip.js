@@ -60,6 +60,7 @@ function loadDayIntoRoute(){
   mode=d.mode||"driving";
   legModes=d.legModes?Object.assign({},d.legModes):{};
   useCur=d.useCur!==false;
+  addrOpen={};
   doneLeg={};
 }
 function syncDayFromRoute(){
@@ -233,7 +234,7 @@ function renderRoutePick(){
     });
   });
 }
-var expandedStop=null, dayListCollapsed=false;
+var expandedStop=null, dayListCollapsed=false, addrOpen={};
 function stopAddr(s){
   if(!s)return "";
   if(s.addr)return s.addr;   /* 臨時點:自動完成選到的地點會直接帶地址 */
@@ -254,12 +255,23 @@ function stopPlace(s){
 /* 停靠點縮圖:有照片就顯示照片,沒有才退回依名稱產生的漸層色塊 */
 function stopThumb(s,p){
   var key=s.pid||s.name;
-  var url=(p&&p.photoUrl)?p.photoUrl:null;
+  var url=(s&&s.photoUrl)?s.photoUrl:((p&&p.photoUrl)?p.photoUrl:null);
   if(url){
     return '<div class="stop2-thumb"><img src="'+attr(url)+'" alt="" loading="lazy" '+
            'onerror="phThumbErr(this,\''+attr(key)+'\')"></div>';
   }
   return '<div class="stop2-thumb" style="background:'+placeGradient(key)+';"></div>';
+}
+/* 臨時地點(不在口袋名單裡)也去抓一次 Google 的照片與簡介,存在該停靠點自己身上 */
+function fetchStopPhoto(idx,name){
+  if(!gKey()||typeof googlePlacePhoto!=="function")return;
+  googlePlacePhoto(name,"",function(res){
+    var s=route[idx];
+    if(!s||!res)return;
+    if(res.photoUrl)s.photoUrl=res.photoUrl;
+    if(res.autoDesc)s.autoDesc=res.autoDesc;
+    if(res.photoUrl||res.autoDesc){syncDayFromRoute();renderRoute();}
+  },function(){});
 }
 function toggleStopExpand(i){
   expandedStop=(expandedStop===i)?null:i;
@@ -305,7 +317,8 @@ function saveEditStop(){
   if(esIdx===null)return;
   var val=$("esInput").value.trim();
   if(!val){toast("請輸入地點名稱");return;}
-  var item={name:val,pid:null,tmp:true};
+  var oldTime=(route[esIdx]&&route[esIdx].time)||"";
+  var item={name:val,pid:null,tmp:true,time:oldTime};
   if(esPlace&&esPlace.geometry&&esPlace.geometry.location){
     item.lat=esPlace.geometry.location.lat();
     item.lng=esPlace.geometry.location.lng();
@@ -313,9 +326,11 @@ function saveEditStop(){
     if(esPlace.formatted_address)item.addr=esPlace.formatted_address;
   }
   route[esIdx]=item;
+  var idx=esIdx;
   closeEditStop();
   expandedStop=null;
   doneLeg={};syncDayFromRoute();renderTripEditor();
+  if(!stopPlace(item))fetchStopPhoto(idx,item.name);
 }
 function renderRoute(){
   if(expandedStop!=null&&expandedStop>=route.length)expandedStop=null;
@@ -328,22 +343,30 @@ function renderRoute(){
     var exp=expandedStop===i;
     var addr=stopAddr(s);
     var p=stopPlace(s);
+    var desc=(p&&p.autoDesc)||s.autoDesc||"";
     var upBtn=i>0?'<button class="stop2-ic" data-mv="'+i+',-1" aria-label="上移">↑</button>':'<span class="stop2-ic off">↑</span>';
     var downBtn=i<route.length-1?'<button class="stop2-ic" data-mv="'+i+',1" aria-label="下移">↓</button>':'<span class="stop2-ic off">↓</span>';
     var meta='';
-    if(p&&(p.cat||p.dur))meta+='<div class="stop2-catdur">'+esc(p.cat||"")+(p.dur?'・'+durTxt(p.dur):'')+'</div>';
-    if(addr)meta+='<div class="stop2-addr">📍 '+esc(addr)+'</div>';
-    if(p&&p.note)meta+='<div class="stop2-note">📝 '+esc(p.note)+'</div>';
+    if(exp){
+      if(desc)meta+='<div class="stop2-desc">'+esc(desc)+'</div>';
+      if(p&&p.note)meta+='<div class="stop2-note">📝 '+esc(p.note)+'</div>';
+      if(addr){
+        var aOpen=!!addrOpen[i];
+        meta+='<button type="button" class="addr-toggle" data-atg="'+i+'">地址 '+(aOpen?'▴':'▾')+'</button>';
+        if(aOpen)meta+='<div class="stop2-addr">'+esc(addr)+'</div>';
+      }
+    }
     var thumbHtml=stopThumb(s,p);
     var hasNext=i<route.length-1;
+    var timeVal=s.time||"";
     var card='<div class="stop2" data-i="'+i+'">'+
-      '<div class="stop2-line"><span class="num2'+(s.tmp?" tmp":"")+'">'+(i+1)+'</span>'+
+      '<div class="stop2-line"><input type="time" class="stop2-time'+(timeVal?" set":"")+'" data-ti="'+i+'" value="'+attr(timeVal)+'" aria-label="時間">'+
       (hasNext?'<span class="bar"></span>':'')+'</div>'+
       '<div class="stop2-right">'+
       '<div class="stop2-card'+(exp?" exp":"")+'">'+
         '<div class="stop2-main">'+
           '<div style="flex:1;min-width:0;">'+
-            '<div class="stop2-name">'+esc(s.name)+(s.tmp?' <span class="tag">臨時</span>':'')+'</div>'+
+            '<div class="stop2-name">'+esc(s.name)+'</div>'+
             (meta?'<div class="stop2-meta">'+meta+'</div>':'')+
             (exp?'<div class="stop2-arrows2">'+upBtn+downBtn+'</div>':'')+
           '</div>'+
@@ -369,6 +392,22 @@ function renderRoute(){
     b.addEventListener("click",function(){
       var a=b.dataset.mv.split(","),i=+a[0],d=+a[1],t=route[i];
       route[i]=route[i+d];route[i+d]=t;doneLeg={};expandedStop=null;syncDayFromRoute();renderTripEditor();
+    });
+  });
+  $("routeOrder").querySelectorAll("[data-ti]").forEach(function(inp){
+    inp.addEventListener("change",function(){
+      var i=+inp.dataset.ti;
+      if(!route[i])return;
+      route[i].time=inp.value||"";
+      inp.classList.toggle("set",!!inp.value);
+      syncDayFromRoute();
+    });
+  });
+  $("routeOrder").querySelectorAll("[data-atg]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var i=+b.dataset.atg;
+      addrOpen[i]=!addrOpen[i];
+      renderRoute();
     });
   });
   $("routeOrder").querySelectorAll("[data-rm]").forEach(function(b){
@@ -598,13 +637,16 @@ $("rList").addEventListener("change",function(){rCat="全部";renderRoutePick();
 $("btnTmp").addEventListener("click",function(){
   var n=$("tmpName").value.trim();
   if(!n){$("tmpName").focus();return;}
-  var stop={name:n,pid:null,tmp:true};
+  var stop={name:n,pid:null,tmp:true,time:""};
   if(tmpPlace&&tmpPlace.geometry&&tmpPlace.geometry.location){
     stop.lat=tmpPlace.geometry.location.lat();
     stop.lng=tmpPlace.geometry.location.lng();
+    if(tmpPlace.formatted_address)stop.addr=tmpPlace.formatted_address;
   }
   route.push(stop);
+  var newIdx=route.length-1;
   $("tmpName").value="";tmpPlace=null;doneLeg={};syncDayFromRoute();renderTripEditor();
+  if(!stopPlace(stop))fetchStopPhoto(newIdx,n);
 });
 $("btnTmpSave").addEventListener("click",function(){
   var n=$("tmpName").value.trim();
@@ -621,14 +663,22 @@ $("btnTmpSave").addEventListener("click",function(){
   tmpPlace=null;
   queuePlacePhotos(); /* 新加的項目在陣列最前面,會被優先抓照片跟簡述 */
 });
-var tmpPlace=null, tmpAutoDone=false;
+var tmpPlace=null, tmpAutoDone=false, tmpLastAC="";
 function tmpInitAutocomplete(){
   if(tmpAutoDone||!window.google||!google.maps||!google.maps.places)return;
   tmpAutoDone=true;
   var opts={componentRestrictions:{country:"jp"},fields:["place_id","formatted_address","name","geometry"]};
   var ac=new google.maps.places.Autocomplete($("tmpName"),opts);
-  ac.addListener("place_changed",function(){tmpPlace=ac.getPlace();gTrackDetail("autocomplete");});
-  $("tmpName").addEventListener("input",function(){tmpPlace=null;});
+  ac.addListener("place_changed",function(){
+    tmpPlace=ac.getPlace();
+    gTrackDetail("autocomplete");
+    /* Google 選完會把整串地址塞回輸入框,改回店名比較好讀,也避免地址被當成名稱存下去 */
+    if(tmpPlace&&tmpPlace.name){tmpLastAC=tmpPlace.name;$("tmpName").value=tmpPlace.name;}
+    else{tmpLastAC=$("tmpName").value;}
+  });
+  $("tmpName").addEventListener("input",function(){
+    if(this.value!==tmpLastAC)tmpPlace=null;
+  });
 }
 $("tmpName").addEventListener("focus",function(){ensureGoogleMapsLoaded();});
 

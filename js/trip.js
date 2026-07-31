@@ -29,21 +29,17 @@ function tripRangeStr(t){
   return f(s)+" – "+f(e).slice(5)+" · "+t.days.length+" 天";
 }
 function showTripScreen(which){
-  $("tripOverview").style.display=which==="overview"?"":"none";
-  $("tripEditor").style.display=which==="editor"?"":"none";
-  $("spotPicker").style.display=which==="picker"?"":"none";
+  var e=$("tripEmpty"), ed=$("tripEditor"), pk=$("spotPicker");
+  if(e)e.style.display=which==="empty"?"":"none";
+  if(ed)ed.style.display=which==="editor"?"":"none";
+  if(pk)pk.style.display=which==="picker"?"":"none";
   syncHeaderVisibility();
 }
-function renderTripList(){
-  $("tripList").innerHTML=trips.length?trips.map(function(t){
-    var n=t.days.reduce(function(a,d){return a+d.stops.length;},0);
-    return '<div class="trip-card" data-id="'+attr(t.id)+'">'+
-      '<div class="t">'+esc(t.name)+'</div>'+
-      '<div class="d">'+esc(tripRangeStr(t))+(n?" · 共 "+n+" 個地點":" · 還沒排景點")+'</div></div>';
-  }).join(""):'<p class="empty">還沒有行程,按下面建立一個。</p>';
-  $("tripList").querySelectorAll(".trip-card").forEach(function(el){
-    el.addEventListener("click",function(){openTrip(el.dataset.id);});
-  });
+/* 行程列表頁已移除,改用標題列的下拉選單切換行程 */
+function renderTripList(){}
+function openTripOrEmpty(){
+  if(trips.length){openTrip(trips[0].id);}
+  else{curTrip=null;showTripScreen("empty");}
 }
 function openTrip(id){
   curTrip=id; curDay=0;
@@ -73,7 +69,7 @@ function syncDayFromRoute(){
   saveTrips();
 }
 function renderTripEditor(){
-  var t=curTripObj(); if(!t){showTripScreen("overview");renderTripList();return;}
+  var t=curTripObj(); if(!t){showTripScreen("empty");return;}
   $("tripName").textContent=t.name;
   $("tripDates").textContent=tripRangeStr(t);
   $("dayTabs").innerHTML=t.days.map(function(d,i){
@@ -132,8 +128,8 @@ function closeTripPop(){
 }
 if($("tripDropdown"))$("tripDropdown").addEventListener("click",toggleTripPop);
 document.addEventListener("click",closeTripPop);
-$("btnNewTrip").addEventListener("click",function(){newTripFlow();});
-$("btnTripEdit").addEventListener("click",function(){editTripFlow();});
+if($("btnNewTrip"))$("btnNewTrip").addEventListener("click",function(){newTripFlow();});
+if($("btnTripEdit"))$("btnTripEdit").addEventListener("click",function(){editTripFlow();});
 var tfMode="new", tfDays=3;
 function tfRangeText(){
   var start=$("tfStart").value;
@@ -166,18 +162,18 @@ function openTripForm(mode){
 function closeTripForm(){
   $("tripFormBk").classList.remove("show");$("tripFormSheet").classList.remove("show");
 }
-$("tfDaysMinus").addEventListener("click",function(){tfDays=Math.max(1,tfDays-1);updateTfUI();});
-$("tfDaysPlus").addEventListener("click",function(){tfDays=Math.min(30,tfDays+1);updateTfUI();});
-$("tfStart").addEventListener("change",updateTfUI);
-$("tripFormBk").addEventListener("click",closeTripForm);
-$("tfSave").addEventListener("click",function(){
+if($("tfDaysMinus"))$("tfDaysMinus").addEventListener("click",function(){tfDays=Math.max(1,tfDays-1);updateTfUI();});
+if($("tfDaysPlus"))$("tfDaysPlus").addEventListener("click",function(){tfDays=Math.min(30,tfDays+1);updateTfUI();});
+if($("tfStart"))$("tfStart").addEventListener("change",updateTfUI);
+if($("tripFormBk"))$("tripFormBk").addEventListener("click",closeTripForm);
+if($("tfSave"))$("tfSave").addEventListener("click",function(){
   var name=$("tfName").value.trim()||"未命名行程";
   var start=$("tfStart").value||"";
   if(start&&isNaN(new Date(start+"T00:00:00")))start="";
   if(tfMode==="new"){
     var t={id:uid(),name:name,start:start||null,days:[]};
     for(var i=0;i<tfDays;i++)t.days.push({stops:[],mode:"driving",useCur:true});
-    trips.push(t); saveTrips(); closeTripForm(); renderTripList(); openTrip(t.id);
+    trips.push(t); saveTrips(); closeTripForm(); openTrip(t.id);
   }else{
     var t=curTripObj(); if(!t){closeTripForm();return;}
     if(tfDays<t.days.length){
@@ -193,12 +189,12 @@ $("tfSave").addEventListener("click",function(){
     saveTrips(); closeTripForm(); loadDayIntoRoute(); renderTripEditor();
   }
 });
-$("tfDelete").addEventListener("click",function(){
+if($("tfDelete"))$("tfDelete").addEventListener("click",function(){
   var t=curTripObj(); if(!t)return;
   if(!confirm("要刪除「"+t.name+"」這個行程嗎?此動作無法復原。"))return;
   trips=trips.filter(function(x){return x.id!==t.id;});
   saveTrips(); curTrip=null; closeTripForm();
-  if(trips.length){openTrip(trips[0].id);}else{showTripScreen("overview"); renderTripList();}
+  openTripOrEmpty();
 });
 function newTripFlow(){openTripForm("new");}
 function editTripFlow(){openTripForm("edit");}
@@ -208,7 +204,7 @@ function openAddStopFromPocket(){
   $("pickTitle").textContent="加到 Day "+(curDay+1);
   showTripScreen("picker"); renderRoutePick();
 }
-$("btnPickBack").addEventListener("click",function(){
+if($("btnPickBack"))$("btnPickBack").addEventListener("click",function(){
   showTripScreen("editor"); renderTripEditor();
 });
 var route=[], mode="driving", legModes={}, doneLeg={}, useCur=true, rCat="全部", rqText="";
@@ -561,7 +557,7 @@ function ensureLegTimes(){
 
 /* ================= 停靠順序小地圖 ================= */
 var rMap=null, rMapMarkers=[], rMapPoly=null, rMapDirRenderer=null, rMapOpen=false, rMapKey=null;
-$("rMapToggle").addEventListener("click",function(){
+if($("rMapToggle"))$("rMapToggle").addEventListener("click",function(){
   rMapOpen=!rMapOpen;
   $("rMapBox").style.display=rMapOpen?"block":"none";
   $("rMapToggle").textContent=rMapOpen?"🗺️ 收合地圖":"🗺️ 顯示路線地圖";
@@ -695,8 +691,8 @@ function renderGo(){
     });
   });
 }
-$("rq").addEventListener("input",function(){rqText=this.value.trim();renderRoutePick();});
-$("rList").addEventListener("change",function(){rCat="全部";renderRoutePick();});
+if($("rq"))$("rq").addEventListener("input",function(){rqText=this.value.trim();renderRoutePick();});
+if($("rList"))$("rList").addEventListener("change",function(){rCat="全部";renderRoutePick();});
 var asPlace=null, asAutoDone=false, asLastAC="";
 function openAddStop(){
   asPlace=null;

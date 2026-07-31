@@ -10,5 +10,4 @@ renderList();
 renderHomeFeature();
 renderHomeRecent();
 if($("stSettingsCount"))$("stSettingsCount").textContent="共 "+places.length+" 個地點・"+lists.length+" 個清單";
-renderTripList();
-if(trips.length){openTrip(trips[0].id);}else{showTripScreen("overview");}
+openTripOrEmpty();

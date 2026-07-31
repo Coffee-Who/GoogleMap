@@ -314,8 +314,14 @@
 </div>
 
 <section class="page" id="page-metro">
-  <div style="display:flex;align-items:center;">
-    <div class="mtabs" id="mCities" style="flex:1;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>
+  <div class="mpick">
+    <button class="mpick-btn" id="mCityBtn" type="button" onclick="mOpenPick('city')">
+      <span class="lb" id="mCityLb">大阪</span><span class="cv">⌄</span>
+    </button>
+    <button class="mpick-btn" id="mLineBtn" type="button" onclick="mOpenPick('line')">
+      <span class="dot" id="mLineDot" style="background:var(--muted)"></span>
+      <span class="lb" id="mLineLb">全部路線</span><span class="cv">⌄</span>
+    </button>
   </div>
   <div class="rpWrap" style="padding:0 12px;">
     <button class="rpBar" id="rpToggle" type="button">
@@ -329,6 +335,9 @@
           <button type="button" data-mode="driving">🚗 開車</button>
         </div>
       </div>
+      <button type="button" class="rp-import" id="rpImpBtn" onclick="rpImpOpen()">
+        <span class="ic">📅</span><span>從行程匯入起訖點</span><span class="ar">›</span>
+      </button>
       <div class="rp-od">
         <div class="rp-rail"><i></i><u></u><i class="d"></i></div>
         <div style="flex:1;min-width:0">
@@ -358,8 +367,7 @@
     </div>
   </div>
   <p class="hint" id="mPassNote" style="margin:0 16px 10px;"></p>
-  <div class="mlyr" id="mLayers"></div>
-  <div class="mnote" id="mNote"></div>
+  <div class="mnote" id="mNote" style="display:none"></div>
   <div id="mWrap">
     <div id="mFsBar">
       <span class="d"></span>
@@ -389,6 +397,22 @@
   </div>
 </section>
 <div id="mModal"><div class="mbox" id="mBox"></div></div>
+
+<!-- ============ 捷運地圖:區域 / 路線 / 從行程匯入 下拉面板 ============ -->
+<div class="sheet-bk" id="mddBk" onclick="mClosePick()"></div>
+<div class="sheet" id="mddCity">
+  <div class="sheet-hd"><h3>選擇區域</h3><button class="x" onclick="mClosePick()">&times;</button></div>
+  <div id="mddCityList"></div>
+</div>
+<div class="sheet" id="mddLine">
+  <div class="sheet-hd"><h3>選擇路線</h3><button class="x" onclick="mClosePick()">&times;</button></div>
+  <div id="mddLineList"></div>
+  <p class="note" style="margin:10px 0 0">選了單一路線後,地圖只會亮起那條線,其他線會變暗;藍圈代表可轉乘。</p>
+</div>
+<div class="sheet" id="mddImp">
+  <div class="sheet-hd"><h3>從行程匯入起訖點</h3><button class="x" onclick="mClosePick()">&times;</button></div>
+  <div id="rpImpBody"></div>
+</div>
 
 <div id="passPage">
   <div class="pp-hd">

@@ -136,7 +136,8 @@ button:active{transform:scale(.98);}
 .stop2-card{flex:1; min-width:0; display:flex; border:1px solid transparent; border-radius:12px; overflow:hidden; background:none;}
 .stop2-card.exp{border-color:var(--accent); background:var(--card);}
 .stop2-main{flex:1; min-width:0; padding:6px 0; display:flex; align-items:flex-start; gap:10px;}
-.stop2-thumb{width:48px;height:48px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.stop2-thumb{width:48px;height:48px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;overflow:hidden;background:var(--glass2);}
+.stop2-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .stop2-thumb svg{width:18px;height:18px;}
 .stop2-name{font-size:16px; font-weight:800;}
 .stop2-meta{margin-top:5px; display:flex; flex-direction:column; gap:3px;}
@@ -393,6 +394,75 @@ html[data-theme="light"] .near-mapprev{background:linear-gradient(150deg,#dbe7f2
 .mtabs button{flex:1;border:none;background:none;color:var(--text2);font-size:13px;font-weight:700;
  padding:8px 2px;border-radius:999px;min-height:0;white-space:nowrap;}
 .mtabs button.on{background:var(--accent);color:var(--on-accent);}
+/* 區域 / 路線 下拉選單列(取代原本的 mtabs + mlyr) */
+.mpick{display:flex;gap:8px;padding:8px 12px 6px;flex-shrink:0;}
+.mpick-btn{flex:1;min-width:0;display:flex;align-items:center;gap:7px;
+  background:var(--glass);border:1px solid var(--a-line);border-radius:999px;
+  padding:9px 13px;color:var(--text);font:inherit;font-size:13.5px;font-weight:700;min-height:0;}
+.mpick-btn .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.mpick-btn .lb{flex:1;min-width:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mpick-btn .cv{font-size:11px;color:var(--a-text);flex-shrink:0;}
+.mpick-btn:active{background:var(--glass2);}
+/* 下拉面板裡的選項 */
+.dd-opt{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;
+  border-bottom:1px solid var(--stroke);padding:13px 4px;color:var(--text);font:inherit;font-size:14px;text-align:left;}
+.dd-opt:last-child{border-bottom:none;}
+.dd-opt .dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+.dd-opt .nm{flex:1;min-width:0;}
+.dd-opt .ck{color:var(--a-500);font-weight:800;font-size:15px;}
+.dd-opt.on .nm{color:var(--a-text);font-weight:800;}
+.dd-opt .sub{display:block;font-size:11px;color:var(--muted);margin-top:2px;font-weight:400;}
+/* 從行程匯入 */
+.rp-import{display:flex;align-items:center;gap:9px;width:100%;background:var(--a-tint);
+  border:1px solid var(--a-line);border-radius:12px;padding:11px 13px;color:var(--a-text);
+  font:inherit;font-size:13px;font-weight:700;margin-bottom:12px;min-height:0;}
+.rp-import .ic{font-size:15px;}
+.rp-import .ar{margin-left:auto;font-size:12px;}
+.imp-trip{display:flex;align-items:center;gap:10px;width:100%;background:var(--glass);
+  border:1px solid var(--stroke);border-radius:13px;padding:12px;color:var(--text);
+  font:inherit;text-align:left;margin-bottom:8px;min-height:0;}
+.imp-trip.on{border-color:var(--a-line);background:var(--a-tint);}
+.imp-trip .nm{flex:1;min-width:0;font-size:14px;font-weight:800;}
+.imp-trip .sub{display:block;font-size:11px;color:var(--muted);margin-top:2px;font-weight:400;}
+.imp-trip .ck{color:var(--a-500);font-weight:800;}
+.imp-days{display:flex;gap:7px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none;}
+.imp-days::-webkit-scrollbar{display:none;}
+.imp-day{flex-shrink:0;background:var(--glass);border:1px solid var(--stroke);border-radius:11px;
+  padding:8px 13px;color:var(--text2);font:inherit;font-size:12.5px;font-weight:700;text-align:center;min-height:0;}
+.imp-day.on{background:var(--a-grad);border-color:transparent;color:var(--on-accent);}
+.imp-day small{display:block;font-size:10px;font-weight:400;opacity:.75;margin-top:1px;}
+.imp-stop{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--stroke);}
+.imp-stop:last-of-type{border-bottom:none;}
+.imp-stop .n{width:22px;height:22px;border-radius:50%;background:var(--a-grad);color:var(--on-accent);
+  font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.imp-stop .nm{flex:1;min-width:0;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.imp-stop .pick{display:flex;gap:5px;flex-shrink:0;}
+.imp-stop .pick button{background:var(--glass2);border:1px solid var(--stroke);border-radius:8px;
+  padding:5px 9px;color:var(--text2);font:inherit;font-size:11px;font-weight:700;min-height:0;}
+.imp-stop .pick button.f.on{background:var(--a-tint);border-color:var(--a-line);color:var(--a-text);}
+.imp-stop .pick button.t.on{background:rgba(255,122,122,.16);border-color:rgba(255,122,122,.5);color:#ffa8a8;}
+.imp-preview{background:var(--glass2);border-radius:11px;padding:11px 12px;font-size:12.5px;
+  color:var(--text2);margin:12px 0 0;line-height:1.7;}
+.imp-preview b{color:var(--a-text);}
+/* 車站面板:分頁 + 附近景點橫向照片卡 */
+.msh-tabs{display:flex;gap:9px;margin-bottom:14px;}
+.msh-tabs button{flex:1;background:none;border:1px solid var(--stroke);border-radius:12px;
+  padding:11px;color:var(--text2);font:inherit;font-size:13.5px;font-weight:700;min-height:0;}
+.msh-tabs button.on{background:var(--a-tint);border-color:var(--a-line);color:var(--a-text);}
+.msh-pane{display:none;}
+.msh-pane.on{display:block;}
+.msh-dist{font-size:12px;color:var(--text2);margin-bottom:10px;}
+.near-cards{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+.near-cards::-webkit-scrollbar{display:none;}
+.near-card{flex-shrink:0;width:124px;}
+.near-card .ph{width:124px;height:86px;border-radius:12px;overflow:hidden;background:var(--glass2);
+  display:flex;align-items:center;justify-content:center;}
+.near-card .ph img{width:100%;height:100%;object-fit:cover;display:block;}
+.near-card .nm{font-size:12.5px;font-weight:700;margin-top:6px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;}
+.near-card .mt{font-size:11px;color:var(--muted);margin-top:2px;}
+/* 這幾個面板內容較長(區域/路線清單、行程停靠點),需要可捲動 */
+#mddCity,#mddLine,#mddImp{max-height:78vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .mlyr{display:flex;gap:6px;overflow-x:auto;padding:0 12px 7px;flex-shrink:0;}
 .mlyr::-webkit-scrollbar{display:none;}
 .mlyr button{white-space:nowrap;font-size:12.5px;padding:6px 12px;border-radius:999px;min-height:0;
@@ -702,6 +772,7 @@ button{border-radius:14px;}
 /* 全螢幕地圖模式 */
 body.mFsOn nav{display:none!important;}
 body.mFsOn #page-metro .mtabs,
+body.mFsOn #page-metro .mpick,
 body.mFsOn #page-metro #mPassNote,
 body.mFsOn #page-metro .rpWrap,
 body.mFsOn #page-metro .mlyr,

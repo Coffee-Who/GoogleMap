@@ -134,6 +134,12 @@ button:active{transform:scale(.98);}
   display:inline-flex; align-items:center; gap:3px;}
 .stop2-line .dot{width:9px; height:9px; border-radius:50%; background:var(--accent); flex-shrink:0;}
 .stop2-line .bar{flex:1; width:2px; background:var(--stroke2); margin-top:5px; min-height:6px; border-radius:1px;}
+/* 連接線容器:交通方式圖示疊在線中間(取代原本整排的 legrow) */
+.stop2-connector{position:relative; flex:1; width:2px; background:var(--stroke2); margin-top:5px; min-height:30px; border-radius:1px;}
+.leg-badge{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:22px; height:22px; border-radius:50%; background:var(--card); border:1px solid var(--stroke2);
+  display:flex; align-items:center; justify-content:center; font-size:12px; line-height:1; padding:0; cursor:pointer;
+  box-shadow:0 2px 6px rgba(0,0,0,.25);}
 .stop2-right{flex:1; min-width:0; display:flex; flex-direction:column;}
 .stop2-card{flex:1; min-width:0; border-radius:12px; padding:2px 0;}
 .stop2-main{flex:1; min-width:0; display:flex; align-items:center; gap:10px; cursor:pointer;}
@@ -141,20 +147,53 @@ button:active{transform:scale(.98);}
 .stop2-thumb{width:84px;height:62px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--glass2);}
 .stop2-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .stop2-thumb svg{width:18px;height:18px;}
-.stop2-menubtn{position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%;
-  background:var(--card); border:1px solid var(--stroke2); color:var(--text2); font-size:12px;
-  display:flex; align-items:center; justify-content:center; padding:0; line-height:1;}
+/* 照片旁邊的「⋯」:拿掉圓框/背景,單純符號 */
+.stop2-menubtn{position:absolute; top:-4px; right:-4px; width:22px; height:22px;
+  background:none; border:none; color:var(--muted); font-size:18px;
+  display:flex; align-items:center; justify-content:center; padding:0; line-height:1; cursor:pointer;}
+.stop2-menubtn:hover,.stop2-menubtn:active{color:var(--text2);}
+/* 名稱旁邊的「⋯」:同樣拿掉圓框/背景 */
+.stop2-editbtn{flex-shrink:0; background:none; border:none; color:var(--muted); font-size:18px; line-height:1;
+  padding:2px 4px; cursor:pointer; margin-top:1px;}
+.stop2-editbtn:hover,.stop2-editbtn:active{color:var(--text2);}
 .stop-menu{position:absolute; top:16px; right:0; z-index:5; min-width:130px; background:var(--card);
   border:1px solid var(--stroke2); border-radius:10px; padding:4px; box-shadow:0 6px 18px rgba(0,0,0,.28);}
 .stop-menu button{display:flex; align-items:center; gap:8px; width:100%; text-align:left; background:none;
   border:none; padding:8px 8px; font-size:13.5px; color:var(--text); border-radius:6px;}
 .stop-menu button:disabled{color:var(--border); pointer-events:none;}
 .stop-menu button.del{color:#e0847e;}
-.stop2-name{font-size:14.5px; font-weight:700;}
-.stop2-meta{margin-top:0;}
+/* 名稱+類型合併一行,超出用刪節號 */
+.stop2-nameblock{display:flex; align-items:center; gap:4px;}
+.stop2-nameline{flex:1; min-width:0; display:flex; align-items:baseline; gap:6px; overflow:hidden;}
+.stop2-name{font-size:14.5px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex-shrink:1;}
+.stop2-meta{margin-top:2px;}
 .stop2-addr{font-size:11px; color:var(--muted); margin-top:4px;}
-.stop2-catdur{font-size:12px; color:var(--muted); margin-top:3px;}
+.stop2-catdur{font-size:12px; color:var(--muted); margin-top:0; flex-shrink:0; white-space:nowrap;}
+.stop2-catdur::before{content:"·"; margin-right:6px; color:var(--muted);}
 .stop2-note{font-size:12px; color:var(--text2); margin-top:2px;}
+
+/* ---- 行程下拉選擇(取代原本的行程列表頁) ---- */
+.trip-poplist{position:relative;}
+.trip-hd2{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+.trip-dropdown{flex:1; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:8px;
+  background:var(--glass); border:1px solid var(--stroke); border-radius:12px; padding:10px 14px; cursor:pointer;}
+.trip-dropdown .txt{min-width:0; display:flex; align-items:baseline; gap:7px; overflow:hidden;}
+.trip-dropdown .nm{font-size:15.5px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.trip-dropdown .dt{font-size:11.5px; color:var(--muted); white-space:nowrap; flex-shrink:0;}
+.trip-dropdown .chev{flex-shrink:0; color:var(--muted); font-size:13px; transition:transform .15s;}
+.trip-dropdown.open .chev{transform:rotate(180deg);}
+.trip-pop{position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:20; background:var(--card);
+  border:1px solid var(--stroke2); border-radius:14px; box-shadow:0 10px 26px rgba(0,0,0,.32); overflow:hidden; display:none;}
+.trip-pop.show{display:block;}
+.trip-pop .item{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 14px;
+  cursor:pointer; border-bottom:1px solid var(--border);}
+.trip-pop .item:last-child{border-bottom:none;}
+.trip-pop .item:hover,.trip-pop .item:active{background:var(--card2);}
+.trip-pop .item .nm{font-size:14.5px; font-weight:700;}
+.trip-pop .item .dt{font-size:11px; color:var(--muted); margin-top:2px;}
+.trip-pop .item.on{background:var(--a-tint);}
+.trip-pop .item.on .nm{color:var(--a-text);}
+.trip-pop .newbtn{display:flex; align-items:center; gap:6px; padding:12px 14px; color:var(--accent); font-weight:700; font-size:13.5px; cursor:pointer;}
 nav{
   position:fixed; bottom:0; left:0; right:0; z-index:20;
   background:var(--nav); border-top:1px solid var(--border);

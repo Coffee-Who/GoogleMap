@@ -31,6 +31,7 @@ main{max-width:520px; margin:0 auto; padding:14px 14px 20px;}
 .page.active{display:block;}
 .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:12px;}
 .section-label{font-size:11.5px; color:var(--muted); margin:16px 0 8px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;}
+.section-label.page-title{font-size:22px; color:var(--text); font-weight:800; letter-spacing:.5px; text-transform:none; margin:2px 0 14px;}
 input[type=text], select{
   width:100%; font-size:16px; padding:11px 13px; border:1px solid var(--border);
   border-radius:12px; background:var(--card2); color:var(--text); outline:none;
@@ -136,25 +137,26 @@ button:active{transform:scale(.98);}
 .stop2-line .bar{flex:1; width:2px; background:var(--stroke2); margin-top:5px; min-height:6px; border-radius:1px;}
 /* 連接線容器:交通方式圖示疊在線中間(取代原本整排的 legrow) */
 /* 連接線拆成上下兩段,中間留空放交通方式圖示,不需外框也不會被線穿過 */
-.stop2-connector{flex:1; display:flex; flex-direction:column; align-items:center; margin-top:5px; min-height:44px; width:100%;}
-.stop2-connector .seg{flex:1; width:2px; background:var(--stroke2); border-radius:1px; min-height:5px;}
-.leg-badge{border:none; background:none; box-shadow:none; padding:3px 0; margin:1px 0;
-  font-size:15px; line-height:1; cursor:pointer; display:block;}
+.stop2-connector{flex:1; display:flex; flex-direction:column; align-items:center; margin-top:6px; min-height:52px; width:100%;}
+.stop2-connector .seg{flex:1; width:2px; background:var(--stroke2); border-radius:1px; min-height:14px;}
+.leg-badge{border:none; background:var(--a-tint); box-shadow:none; padding:0; margin:0 0 4px;
+  width:24px; height:24px; border-radius:50%; font-size:13px; line-height:1; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;}
 .stop2-right{flex:1; min-width:0; display:flex; flex-direction:column;}
 .stop2-card{flex:1; min-width:0; border-radius:12px; padding:2px 0;}
 .stop2-main{flex:1; min-width:0; display:flex; align-items:center; gap:10px; cursor:pointer;}
 .stop2-thumbwrap{position:relative; flex-shrink:0;}
-.stop2-thumb{width:84px;height:62px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--glass2);}
+.stop2-thumb{width:100px;height:74px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--glass2);}
 .stop2-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .stop2-thumb svg{width:18px;height:18px;}
 /* 照片右側的「⋯」:獨立一欄,不疊在照片上 */
 .stop2-morewrap{position:relative; flex-shrink:0;}
-.stop2-menubtn{background:none; border:none; color:var(--muted); font-size:18px; line-height:1;
-  padding:2px 2px; cursor:pointer; display:flex; align-items:center; justify-content:center;}
+.stop2-menubtn{background:none; border:none; color:var(--muted); font-size:19px; line-height:1;
+  padding:2px 4px; cursor:pointer; display:flex; align-items:center; justify-content:center; writing-mode:horizontal-tb;}
 .stop2-menubtn:hover,.stop2-menubtn:active{color:var(--text2);}
 /* 名稱旁邊的「⋯」:同樣拿掉圓框/背景 */
-.stop2-editbtn{flex-shrink:0; background:none; border:none; color:var(--muted); font-size:18px; line-height:1;
-  padding:2px 4px; cursor:pointer; margin-top:1px;}
+.stop2-editbtn{flex-shrink:0; background:none; border:none; color:var(--muted); font-size:19px; line-height:1;
+  padding:2px 4px; cursor:pointer; margin-top:0;}
 .stop2-editbtn:hover,.stop2-editbtn:active{color:var(--text2);}
 .stop-menu{position:absolute; top:26px; right:0; z-index:60; min-width:138px; background:var(--surface);
   backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
@@ -167,12 +169,12 @@ html[data-theme="light"] .stop-menu{background:var(--surface2);}
 .stop-menu button.del{color:#e0847e;}
 /* 名稱+類型合併一行,超出用刪節號 */
 .stop2-nameblock{display:flex; align-items:center; gap:4px;}
-.stop2-nameline{flex:1; min-width:0; display:flex; align-items:baseline; gap:6px; overflow:hidden;}
-.stop2-name{font-size:14.5px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex-shrink:1;}
-.stop2-meta{margin-top:2px;}
+.stop2-nametxt{flex:1; min-width:0;}
+.stop2-name{display:block; font-size:15.5px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.stop2-meta{margin-top:4px;}
 .stop2-addr{font-size:11px; color:var(--muted); margin-top:4px;}
-.stop2-catdur{font-size:12px; color:var(--muted); margin-top:0; flex-shrink:0; white-space:nowrap;}
-.stop2-catdur::before{content:"·"; margin-right:6px; color:var(--muted);}
+.stop2-catdur{display:block; font-size:12.5px; color:var(--muted); margin-top:4px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .stop2-note{font-size:12px; color:var(--text2); margin-top:2px;}
 
 /* ---- 行程下拉選擇(取代原本的行程列表頁) ---- */
@@ -615,6 +617,19 @@ input[type=date]{width:100%;font-size:15px;padding:10px 13px;border:1px solid va
   color-scheme:dark;}
 input[type=date]:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg);}
 html[data-theme="light"] input[type=date]{color-scheme:light;}
+input[type=time]{width:100%;font-size:15px;padding:10px 13px;border:1px solid var(--border);
+  border-radius:12px;background:var(--card2);color:var(--text);outline:none;font-family:inherit;
+  color-scheme:dark;-webkit-appearance:none;appearance:none;}
+input[type=time]:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg);}
+input[type=time]::-webkit-datetime-edit,
+input[type=time]::-webkit-datetime-edit-fields-wrapper,
+input[type=time]::-webkit-datetime-edit-hour-field,
+input[type=time]::-webkit-datetime-edit-minute-field,
+input[type=time]::-webkit-datetime-edit-text,
+input[type=time]::-webkit-datetime-edit-ampm-field{color:var(--text);background:transparent;}
+input[type=time]::-webkit-calendar-picker-indicator{filter:invert(1) brightness(1.7);opacity:.65;}
+html[data-theme="light"] input[type=time]{color-scheme:light;}
+html[data-theme="light"] input[type=time]::-webkit-calendar-picker-indicator{filter:none;}
 #tfRange{text-align:left;}
 .rp-sug{position:absolute;left:0;right:0;top:100%;margin-top:2px;background:var(--card);
   border:1px solid var(--stroke);border-radius:12px;z-index:30;max-height:220px;overflow-y:auto;

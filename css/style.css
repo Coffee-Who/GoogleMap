@@ -135,11 +135,11 @@ button:active{transform:scale(.98);}
 .stop2-line .dot{width:9px; height:9px; border-radius:50%; background:var(--accent); flex-shrink:0;}
 .stop2-line .bar{flex:1; width:2px; background:var(--stroke2); margin-top:5px; min-height:6px; border-radius:1px;}
 /* 連接線容器:交通方式圖示疊在線中間(取代原本整排的 legrow) */
-.stop2-connector{position:relative; flex:1; width:2px; background:var(--stroke2); margin-top:5px; min-height:30px; border-radius:1px;}
-.leg-badge{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-  width:22px; height:22px; border-radius:50%; background:var(--card); border:1px solid var(--stroke2);
-  display:flex; align-items:center; justify-content:center; font-size:12px; line-height:1; padding:0; cursor:pointer;
-  box-shadow:0 2px 6px rgba(0,0,0,.25);}
+/* 連接線拆成上下兩段,中間留空放交通方式圖示,不需外框也不會被線穿過 */
+.stop2-connector{flex:1; display:flex; flex-direction:column; align-items:center; margin-top:5px; min-height:44px; width:100%;}
+.stop2-connector .seg{flex:1; width:2px; background:var(--stroke2); border-radius:1px; min-height:5px;}
+.leg-badge{border:none; background:none; box-shadow:none; padding:3px 0; margin:1px 0;
+  font-size:15px; line-height:1; cursor:pointer; display:block;}
 .stop2-right{flex:1; min-width:0; display:flex; flex-direction:column;}
 .stop2-card{flex:1; min-width:0; border-radius:12px; padding:2px 0;}
 .stop2-main{flex:1; min-width:0; display:flex; align-items:center; gap:10px; cursor:pointer;}
@@ -147,17 +147,20 @@ button:active{transform:scale(.98);}
 .stop2-thumb{width:84px;height:62px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--glass2);}
 .stop2-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .stop2-thumb svg{width:18px;height:18px;}
-/* 照片旁邊的「⋯」:拿掉圓框/背景,單純符號 */
-.stop2-menubtn{position:absolute; top:-4px; right:-4px; width:22px; height:22px;
-  background:none; border:none; color:var(--muted); font-size:18px;
-  display:flex; align-items:center; justify-content:center; padding:0; line-height:1; cursor:pointer;}
+/* 照片右側的「⋯」:獨立一欄,不疊在照片上 */
+.stop2-morewrap{position:relative; flex-shrink:0;}
+.stop2-menubtn{background:none; border:none; color:var(--muted); font-size:18px; line-height:1;
+  padding:2px 2px; cursor:pointer; display:flex; align-items:center; justify-content:center;}
 .stop2-menubtn:hover,.stop2-menubtn:active{color:var(--text2);}
 /* 名稱旁邊的「⋯」:同樣拿掉圓框/背景 */
 .stop2-editbtn{flex-shrink:0; background:none; border:none; color:var(--muted); font-size:18px; line-height:1;
   padding:2px 4px; cursor:pointer; margin-top:1px;}
 .stop2-editbtn:hover,.stop2-editbtn:active{color:var(--text2);}
-.stop-menu{position:absolute; top:16px; right:0; z-index:5; min-width:130px; background:var(--card);
-  border:1px solid var(--stroke2); border-radius:10px; padding:4px; box-shadow:0 6px 18px rgba(0,0,0,.28);}
+.stop-menu{position:absolute; top:26px; right:0; z-index:60; min-width:138px; background:var(--surface);
+  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--stroke2); border-radius:12px; padding:5px; box-shadow:0 14px 34px rgba(0,0,0,.55);}
+html[data-theme="light"] .stop-menu{background:var(--surface2);}
+.stop-menu button:hover,.stop-menu button:active{background:var(--glass2);}
 .stop-menu button{display:flex; align-items:center; gap:8px; width:100%; text-align:left; background:none;
   border:none; padding:8px 8px; font-size:13.5px; color:var(--text); border-radius:6px;}
 .stop-menu button:disabled{color:var(--border); pointer-events:none;}
@@ -182,13 +185,15 @@ button:active{transform:scale(.98);}
 .trip-dropdown .dt{font-size:11.5px; color:var(--muted); white-space:nowrap; flex-shrink:0;}
 .trip-dropdown .chev{flex-shrink:0; color:var(--muted); font-size:13px; transition:transform .15s;}
 .trip-dropdown.open .chev{transform:rotate(180deg);}
-.trip-pop{position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:20; background:var(--card);
-  border:1px solid var(--stroke2); border-radius:14px; box-shadow:0 10px 26px rgba(0,0,0,.32); overflow:hidden; display:none;}
+.trip-pop{position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:60; background:var(--surface);
+  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--stroke2); border-radius:14px; box-shadow:0 14px 34px rgba(0,0,0,.55); overflow:hidden; display:none;}
+html[data-theme="light"] .trip-pop{background:var(--surface2);}
 .trip-pop.show{display:block;}
 .trip-pop .item{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 14px;
   cursor:pointer; border-bottom:1px solid var(--border);}
 .trip-pop .item:last-child{border-bottom:none;}
-.trip-pop .item:hover,.trip-pop .item:active{background:var(--card2);}
+.trip-pop .item:hover,.trip-pop .item:active{background:var(--surface2);}
 .trip-pop .item .nm{font-size:14.5px; font-weight:700;}
 .trip-pop .item .dt{font-size:11px; color:var(--muted); margin-top:2px;}
 .trip-pop .item.on{background:var(--a-tint);}
@@ -984,3 +989,7 @@ html[data-theme="light"] .q-n{color:var(--a-900);}
 .gd-row{border-bottom:none;padding:2px 0;font-size:12.5px;}
 .gd-row span:first-child{color:var(--text2);font-weight:600;}
 
+
+/* 編輯地點:時間欄位放大好按 */
+#esTime{font-size:20px; font-weight:700; padding:12px 14px; text-align:center; letter-spacing:1px;}
+#esSheet .row label,#esSheet .fl{font-size:15px;}

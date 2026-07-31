@@ -91,7 +91,7 @@ function gmapsReady(){
   gmapsLoaded=true;gmapsLoading=false;
   gmapsGeocoder=new google.maps.Geocoder();
   rpInitAutocomplete();
-  tmpInitAutocomplete();
+  asInitAutocomplete();
   if(typeof ppInitRecoAutocomplete==="function")ppInitRecoAutocomplete();
   if($("rpHint"))$("rpHint").textContent="";
   if(typeof ensureLegTimes==="function")ensureLegTimes();

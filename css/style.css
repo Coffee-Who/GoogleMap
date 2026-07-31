@@ -645,25 +645,42 @@ html[data-theme="light"] #myPassPage{background:var(--surface2);}
 .pp-sub{font-size:12px;color:var(--muted);margin:0 16px 12px;}
 .pp-body{flex:1;overflow-y:auto;padding:0 16px 24px;-webkit-overflow-scrolling:touch;}
 .pp-cat{font-size:11.5px;color:var(--muted);font-weight:800;letter-spacing:1.2px;text-transform:uppercase;margin:16px 0 8px;}
-.pp-group{border:1px solid var(--stroke);border-radius:16px;overflow:hidden;background:var(--card);}
-.pp-item{border-bottom:1px solid var(--stroke);}
-.pp-item:last-child{border-bottom:none;}
-.pp-item summary{list-style:none;cursor:pointer;display:flex;gap:11px;align-items:center;padding:11px 12px;}
+.pp-group{display:flex;flex-direction:column;gap:10px;}
+.pp-item{border:none;border-radius:18px;overflow:hidden;}
+.pp-item summary{list-style:none;cursor:pointer;position:relative;display:block;
+  min-height:112px;background-size:cover;background-position:center;border-radius:18px;
+  border:1px solid var(--stroke2);box-shadow:0 8px 20px rgba(0,0,0,.22);overflow:hidden;}
 .pp-item summary::-webkit-details-marker{display:none;}
-.pp-ic{width:44px;height:32px;border-radius:8px;background:var(--glass2);flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;font-size:17px;}
-.pp-nm{font-size:13.5px;color:var(--text);line-height:1.4;}
-.pp-tag{display:inline-block;margin-top:4px;font-size:10.5px;padding:2px 8px;border-radius:999px;
-  background:var(--ok-bg);color:var(--ok);}
-.pp-item summary .pp-car{margin-left:auto;color:var(--muted);font-size:13px;transition:transform .15s;}
+.pp-item summary::before{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(4,8,14,.38) 0%,rgba(4,8,14,.72) 45%,rgba(4,8,14,.96) 100%);}
+.pp-item.pp-fit-contain summary{background-color:#0d1e30;background-size:contain;background-repeat:no-repeat;}
+.pp-ic{position:relative;padding:13px 40px 13px 14px;min-height:112px;display:flex;flex-direction:column;justify-content:flex-end;}
+.pp-item-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.pp-nm{font-size:14.5px;font-weight:900;color:#fff;line-height:1.35;text-shadow:0 1px 4px rgba(0,0,0,.55);}
+.pp-price{font-size:11px;font-weight:800;color:#fff;background:rgba(0,0,0,.5);padding:4px 10px;
+  border-radius:999px;white-space:nowrap;flex-shrink:0;}
+.pp-tag{display:inline-block;margin-top:7px;font-size:10.5px;font-weight:700;color:#fff;
+  background:rgba(255,255,255,.24);padding:4px 10px;border-radius:999px;width:fit-content;}
+.pp-badge{position:absolute;top:12px;left:14px;font-size:9.5px;font-weight:800;z-index:1;
+  color:#fff;background:rgba(0,0,0,.48);padding:3px 8px;border-radius:999px;letter-spacing:.4px;}
+.pp-item summary .pp-car{position:absolute;right:14px;bottom:12px;z-index:1;color:#fff;
+  font-size:13px;opacity:.9;transition:transform .15s;}
 .pp-item[open] summary .pp-car{transform:rotate(180deg);}
-.pp-detail{padding:0 12px 14px 67px;}
+.pp-detail{padding:12px 4px 4px;}
+.pp-detail img{width:100%;border-radius:12px;display:block;margin:0 0 10px;}
+.pp-detail-maplbl{font-size:11px;color:var(--muted);margin:0 0 6px;font-weight:700;}
 .pp-detail p{font-size:12.5px;color:var(--text2);line-height:1.7;margin:0 0 10px;}
-.pp-warn{display:flex;gap:7px;align-items:center;padding:7px 9px;border-radius:10px;
+.pp-warn{display:flex;gap:7px;align-items:flex-start;padding:8px 10px;border-radius:10px;
   background:var(--warn-bg);color:var(--warn);font-size:11.5px;margin:0 0 10px;}
 .pp-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:6px 12px;
   border-radius:10px;border:1px solid var(--stroke);color:var(--text2);text-decoration:none;}
-.pp-reco{background:var(--card);border:1px solid var(--a-line);border-radius:18px;padding:14px;margin-bottom:8px;}
+.pp-reco{background:var(--card);border:1px solid var(--a-line);border-radius:18px;overflow:hidden;margin-bottom:8px;}
+.pp-reco-toggle{width:100%;background:none;border:none;color:var(--text);display:flex;align-items:center;
+  gap:7px;padding:14px;font-size:14px;font-weight:800;cursor:pointer;text-align:left;min-height:0;}
+.pp-reco-toggle .pp-reco-car{margin-left:auto;color:var(--muted);font-size:13px;transition:transform .15s;}
+.pp-reco-toggle[aria-expanded="true"] .pp-reco-car{transform:rotate(180deg);}
+.pp-reco-bd{padding:0 14px 14px;display:none;}
+.pp-reco-bd.show{display:block;}
 .pp-reco-hd{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:800;margin-bottom:8px;}
 .pp-tags{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-radius:12px;
   background:var(--glass2);border:1px solid var(--stroke);margin-bottom:10px;}
@@ -905,9 +922,9 @@ html[data-theme="light"] .g-star{color:var(--a-900);}
 .g-addr{font-size:11.5px;color:var(--muted);margin-top:2px;}
 
 
-/* ---- 浮動面板必須不透明且高於遮罩 ---- */
-.sheet-bk{z-index:40!important;}
-.sheet,#sheet,#gsSheet{z-index:45!important;}
+/* ---- 浮動面板必須不透明且高於遮罩(也要高於 #passPage/#myPassPage 這類全螢幕頁,z-index:120/130) ---- */
+.sheet-bk{z-index:140!important;}
+.sheet,#sheet,#gsSheet{z-index:141!important;}
 .sheet,#sheet,#gsSheet,#mSheet,.mbox{
   background:var(--surface)!important;color:var(--text);
   backdrop-filter:none;-webkit-backdrop-filter:none;

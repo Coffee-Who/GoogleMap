@@ -4,10 +4,7 @@ var mCity="大阪", mST=[], mSc=1, mTx=0, mTy=0, mLine=null, mPos=null, mNearIdx
 var mSvg,mRoot,mWrap;
 function mInit(){
   mSvg=$("mMap"); mRoot=$("mRoot"); mWrap=$("mWrap");
-  $("mCities").innerHTML=Object.keys(METRO).filter(function(c){return c!=="台北";}).map(function(c){
-    return '<button data-c="'+c+'">'+c+'</button>';}).join("");
-  $("mCities").querySelectorAll("button").forEach(function(b){
-    b.onclick=function(){mLoad(b.dataset.c);};});
+  mRenderCityPick();
   $("mZin").onclick=function(){mZoom(1.4);};
   $("mZout").onclick=function(){mZoom(1/1.4);};
   $("mFit").onclick=function(){mSc=1;mTx=0;mTy=0;mApply();};
@@ -31,7 +28,7 @@ function mLoad(c){
   mCity=c; var d=METRO[c]; mST=d.st; mLine=null; mNearIdx=-1;
   mSvg.setAttribute("viewBox","0 0 "+d.W+" "+d.H);
   mRoot.innerHTML=d.svg;
-  $("mCities").querySelectorAll("button").forEach(function(b){b.classList.toggle("on",b.dataset.c===c);});
+  $("mCityLb").textContent=c;
   $("mLoc").style.display=d.geo?"block":"none";
   mSc=1;mTx=0;mTy=0;mApply();mBindHits();mCloseSheet();mLayers();mApplyLayer();
   $("mQ").value="";mSearch();
@@ -85,20 +82,63 @@ function mBindHits(){
   var bg=mRoot.querySelector("#bgrect");
   if(bg)bg.addEventListener("click",mCloseSheet);
 }
+/* 區域下拉:列出所有可選區域,附上該區域的路線說明當副標 */
+function mRenderCityPick(){
+  var cities=Object.keys(METRO).filter(function(c){return c!=="台北";});
+  $("mddCityList").innerHTML=cities.map(function(c){
+    var note=METRO[c].note||"";
+    return '<button type="button" class="dd-opt'+(c===mCity?" on":"")+'" data-c="'+attr(c)+'">'+
+      '<span class="nm">'+esc(c)+(note?'<span class="sub">'+esc(note)+'</span>':'')+'</span>'+
+      (c===mCity?'<span class="ck">✓</span>':'')+'</button>';
+  }).join("");
+  $("mddCityList").querySelectorAll("button").forEach(function(b){
+    b.onclick=function(){mClosePick();mLoad(b.dataset.c);};
+  });
+}
+/* 路線下拉:更新按鈕上的名稱與顏色圓點,面板列出全部路線 */
 function mLayers(){
   var d=METRO[mCity],names=Object.keys(d.col);
-  $("mLayers").innerHTML='<button class="'+(mLine?"":"on")+'" data-l="">全部</button>'+
-    names.map(function(n){return '<button class="'+(mLine===n?"on":"")+'" data-l="'+attr(n)+'">'+
-      '<i style="background:'+d.col[n]+'"></i>'+esc(n)+'</button>';}).join("");
-  $("mLayers").querySelectorAll("button").forEach(function(b){
-    b.onclick=function(){mLine=b.dataset.l||null;mApplyLayer();mLayers();};});
+  $("mLineLb").textContent=mLine||"全部路線";
+  $("mLineDot").style.background=mLine?(d.col[mLine]||"var(--muted)"):"var(--muted)";
+  $("mddLineList").innerHTML=
+    '<button type="button" class="dd-opt'+(mLine?"":" on")+'" data-l="">'+
+      '<span class="dot" style="background:var(--muted)"></span><span class="nm">全部路線</span>'+
+      (mLine?"":'<span class="ck">✓</span>')+'</button>'+
+    names.map(function(n){
+      return '<button type="button" class="dd-opt'+(mLine===n?" on":"")+'" data-l="'+attr(n)+'">'+
+        '<span class="dot" style="background:'+d.col[n]+'"></span><span class="nm">'+esc(n)+'</span>'+
+        (mLine===n?'<span class="ck">✓</span>':'')+'</button>';
+    }).join("");
+  $("mddLineList").querySelectorAll("button").forEach(function(b){
+    b.onclick=function(){mLine=b.dataset.l||null;mClosePick();mApplyLayer();mLayers();};
+  });
+  /* 舊的橫向 chips 若還在頁面上就一併同步,沒有也不會出錯 */
+  var lyr=$("mLayers");
+  if(lyr){
+    lyr.innerHTML='<button class="'+(mLine?"":"on")+'" data-l="">全部</button>'+
+      names.map(function(n){return '<button class="'+(mLine===n?"on":"")+'" data-l="'+attr(n)+'">'+
+        '<i style="background:'+d.col[n]+'"></i>'+esc(n)+'</button>';}).join("");
+    lyr.querySelectorAll("button").forEach(function(b){
+      b.onclick=function(){mLine=b.dataset.l||null;mApplyLayer();mLayers();};});
+  }
+}
+/* 下拉面板開合 */
+function mOpenPick(which){
+  if(which==="line")mLayers();
+  $("mddBk").classList.add("show");
+  $(which==="city"?"mddCity":"mddLine").classList.add("show");
+}
+function mClosePick(){
+  $("mddBk").classList.remove("show");
+  ["mddCity","mddLine","mddImp"].forEach(function(id){var e=$(id);if(e)e.classList.remove("show");});
 }
 function mApplyLayer(){
   var polys=mRoot.querySelectorAll("polyline");
   mRoot.querySelectorAll(".trmark").forEach(function(e){e.remove();});
   if(!mLine){
     mRoot.querySelectorAll(".dim").forEach(function(e){e.classList.remove("dim");});
-    $("mNote").textContent=METRO[mCity].note;return;
+    /* 區域的路線說明已經移到下拉面板裡當副標,這裡就不再重複佔一行 */
+    $("mNote").style.display="none";$("mNote").textContent="";return;
   }
   var col=METRO[mCity].col[mLine];
   [].forEach.call(polys,function(e){
@@ -128,6 +168,7 @@ function mApplyLayer(){
     c.setAttribute("stroke","#4da3ff");c.setAttribute("stroke-width","2.6");
     host.insertBefore(c,first);
   });
+  $("mNote").style.display="block";
   $("mNote").textContent=mLine+"・"+Object.keys(on).length+" 站・藍圈 = 可轉乘";
 }
 function mCodeHtml(cd,sm){return (cd||[]).map(function(c){

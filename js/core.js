@@ -253,7 +253,7 @@ function openSheet(){
   setTimeout(function(){$("inName").focus();},260);
 }
 /* 新增景點:名稱欄位掛 Google 自動完成,選到地點會一併帶入座標與地址 */
-var inNamePlace=null, inNameAutoDone=false;
+var inNamePlace=null, inNameAutoDone=false, inNameLastAC="";
 function inNameInitAutocomplete(){
   if(inNameAutoDone||!window.google||!google.maps||!google.maps.places)return;
   inNameAutoDone=true;
@@ -261,13 +261,18 @@ function inNameInitAutocomplete(){
   ac.addListener("place_changed",function(){
     inNamePlace=ac.getPlace();
     if(typeof gTrackDetail==="function")gTrackDetail("autocomplete");
+    /* Google 選完會把整串地址塞回輸入框,改回店名,避免地址被當成景點名稱 */
+    if(inNamePlace&&inNamePlace.name){inNameLastAC=inNamePlace.name;$("inName").value=inNamePlace.name;}
+    else{inNameLastAC=$("inName").value;}
     /* 依 Google 回傳的類型自動選分類,選不到就維持使用者原本的選擇 */
     if(inNamePlace&&inNamePlace.types&&typeof gCat==="function"){
       var c=gCat(inNamePlace.types,inNamePlace.name||"");
       if(c&&cats.indexOf(c)>=0)$("inCat").value=c;
     }
   });
-  $("inName").addEventListener("input",function(){inNamePlace=null;});
+  $("inName").addEventListener("input",function(){
+    if(this.value!==inNameLastAC)inNamePlace=null;
+  });
 }
 function closeSheet(){inNamePlace=null;$("sheetBk").classList.remove("show");$("sheet").classList.remove("show");}
 $("btnParseLink").addEventListener("click",function(){
@@ -317,3 +322,48 @@ function refreshSelects(pick){
   if(pick&&pick.sel===$("inList"))$("inList").value=pick.val;
 }
 
+/* ================= 左右滑動切換分頁 ================= */
+/* 只在「明顯是水平滑動」時才切頁,且避開地圖、橫向滾動列、開著的面板 */
+var SWIPE_PAGES=["home","list","route","settings"];
+var swX=0, swY=0, swOK=false;
+function swipeBlocked(el){
+  /* 開著任何 bottom sheet 就不切頁 */
+  if(document.querySelector(".sheet.show"))return true;
+  /* 捷運地圖要能自由拖曳縮放 */
+  if(curPage==="metro")return true;
+  /* 起點落在地圖、SVG、或會橫向滾動的容器上就交給它們處理 */
+  while(el&&el!==document.body){
+    if(el.tagName==="SVG"||el.tagName==="svg")return true;
+    if(el.classList&&(el.classList.contains("near-mapprev")||el.classList.contains("chips")||
+       el.classList.contains("distRow")||el.classList.contains("cat-row")||
+       el.classList.contains("day-tabs")||el.classList.contains("gm-style")))return true;
+    if(el.id==="bigMapBox"||el.id==="rMapCanvas"||el.id==="routeMap")return true;
+    /* 任何實際可橫向滾動的元素 */
+    if(el.scrollWidth>el.clientWidth+8){
+      var ov=getComputedStyle(el).overflowX;
+      if(ov==="auto"||ov==="scroll")return true;
+    }
+    el=el.parentElement;
+  }
+  return false;
+}
+document.addEventListener("touchstart",function(e){
+  if(e.touches.length!==1){swOK=false;return;}
+  var t=e.touches[0];
+  swX=t.clientX;swY=t.clientY;
+  swOK=!swipeBlocked(e.target);
+},{passive:true});
+document.addEventListener("touchend",function(e){
+  if(!swOK)return;
+  swOK=false;
+  var t=e.changedTouches&&e.changedTouches[0];
+  if(!t)return;
+  var dx=t.clientX-swX, dy=t.clientY-swY;
+  /* 距離要夠長,而且水平位移明顯大於垂直,才算是切頁手勢 */
+  if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.8)return;
+  var i=SWIPE_PAGES.indexOf(curPage);
+  if(i<0)return;
+  var next=dx<0?i+1:i-1;
+  if(next<0||next>=SWIPE_PAGES.length)return;
+  goPage(SWIPE_PAGES[next]);
+},{passive:true});

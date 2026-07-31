@@ -1013,32 +1013,53 @@ function mOpen(i){
     (s.l.length>1?'<span class="mtag">轉乘站</span>':'')+
     '<button class="x" onclick="mCloseSheet()">&times;</button></div>'+
     '<div class="mlines">'+esc(s.l.join("・"))+'</div>'+
-    '<div class="msh-grid">'+
-    '<button onclick="rpSetFromStation('+i+',\'from\')"><span class="mg-ic">'+IC.pin+'</span><span>設為出發</span></button>'+
-    '<button onclick="rpSetFromStation('+i+',\'to\')"><span class="mg-ic">'+IC.pin+'</span><span>設為目的地</span></button>'+
-    (inRoute?'<button disabled style="color:var(--ok);"><span class="mg-ic" style="color:var(--ok);">'+IC.check+'</span><span>已在路線中</span></button>'
-           :'<button onclick="mAddRoute('+i+')"><span class="mg-ic">'+IC.plus+'</span><span>插入路線</span></button>')+
-    '<button onclick="mGmap('+i+')"><span class="mg-ic">'+IC.ext+'</span><span>Google 地圖</span></button>'+
+    '<div class="msh-tabs">'+
+      '<button type="button" class="on" onclick="mshTab(0,this)">車站資訊</button>'+
+      '<button type="button" onclick="mshTab(1,this)">附近景點</button>'+
     '</div>'+
-    (transferRows?'<div class="section-label" style="margin:0 0 8px">'+(s.l.length>1?"轉乘路線":"所屬路線")+'</div>'+transferRows:'');
-  $("mSheet").innerHTML=head+'<div id="mNearBox"><p style="font-size:13px;color:var(--muted);margin:8px 0 0">'+
-    '正在計算附近的口袋景點…</p></div>';
+    '<div class="msh-pane on" id="mshP0">'+
+      (transferRows?'<div class="section-label" style="margin:0 0 4px">'+(s.l.length>1?"轉乘路線":"所屬路線")+'</div>'+transferRows:'')+
+      '<div class="msh-grid">'+
+      '<button onclick="rpSetFromStation('+i+',\'from\')"><span class="mg-ic">'+IC.pin+'</span><span>設為出發</span></button>'+
+      '<button onclick="rpSetFromStation('+i+',\'to\')"><span class="mg-ic">'+IC.pin+'</span><span>設為目的地</span></button>'+
+      (inRoute?'<button disabled style="color:var(--ok);"><span class="mg-ic" style="color:var(--ok);">'+IC.check+'</span><span>已在路線中</span></button>'
+             :'<button onclick="mAddRoute('+i+')"><span class="mg-ic">'+IC.plus+'</span><span>插入路線</span></button>')+
+      '<button onclick="mGmap('+i+')"><span class="mg-ic">'+IC.ext+'</span><span>Google 地圖</span></button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="msh-pane" id="mshP1"><div id="mNearBox">'+
+      '<p style="font-size:13px;color:var(--muted);margin:4px 0 0">正在計算附近的口袋景點…</p></div></div>';
+  $("mSheet").innerHTML=head;
   $("mSheet").classList.add("on");
   mStationCoord(s,function(coord){
     var box=$("mNearBox"); if(!box)return;
-    if(!coord){box.innerHTML='<p style="font-size:13px;color:var(--muted);margin:8px 0 0">'+
+    if(!coord){box.innerHTML='<p style="font-size:13px;color:var(--muted);margin:4px 0 0">'+
       '查不到這站的座標,無法計算附近景點</p>';return;}
     var near=mNearPlaces(coord);
-    var myD=mPos?'<div style="font-size:12.5px;color:var(--text2);margin:2px 0 8px">距離你約 '+
-      distTxt(haversine(mPos.lat,mPos.lng,coord.lat,coord.lng))+'</div>':'';
-    box.innerHTML=myD+'<div class="section-label" style="margin:10px 0 4px">這站附近的口袋景點</div>'+
-      (near&&near.length?near.map(function(r){
-        return '<div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px">'+
-        '<div style="width:32px;height:32px;border-radius:9px;flex-shrink:0;background:'+placeGradient(r.p.id||r.p.name)+';"></div>'+
-        '<span>'+esc(r.p.name)+'</span><span style="font-size:11.5px;color:var(--muted)">'+esc(r.p.cat)+'</span>'+
-        '<span style="margin-left:auto;font-size:12px;color:var(--muted)">🚶 '+distTxt(r.d)+'</span></div>';}).join("")
-       :'<p style="font-size:13px;color:var(--muted);margin:6px 0 0">這站 1.5 公里內沒有你收藏的景點</p>');
+    var myD=mPos?'距離你約 '+distTxt(haversine(mPos.lat,mPos.lng,coord.lat,coord.lng))+'・':'';
+    if(!near||!near.length){
+      box.innerHTML='<div class="msh-dist">'+myD+'這站 1.5 公里內沒有你收藏的景點</div>';return;
+    }
+    box.innerHTML='<div class="msh-dist">'+myD+'1.5 公里內有 '+near.length+' 個口袋景點</div>'+
+      '<div class="near-cards">'+near.map(function(r){
+        var p=r.p, key=p.id||p.name;
+        var ph=p.photoUrl
+          ? '<div class="ph"><img src="'+attr(p.photoUrl)+'" alt="" loading="lazy" onerror="phThumbErr(this,\''+attr(key)+'\')"></div>'
+          : '<div class="ph" style="background:'+placeGradient(key)+'"></div>';
+        return '<div class="near-card">'+ph+
+          '<div class="nm">'+esc(p.name)+'</div>'+
+          '<div class="mt">'+esc(p.cat||"")+'・🚶 '+distTxt(r.d)+'</div></div>';
+      }).join("")+'</div>';
   });
+}
+/* 車站面板分頁切換 */
+function mshTab(i,btn){
+  var wrap=$("mSheet");
+  wrap.querySelectorAll(".msh-tabs button").forEach(function(b){b.classList.remove("on");});
+  btn.classList.add("on");
+  var p0=$("mshP0"),p1=$("mshP1");
+  if(p0)p0.classList.toggle("on",i===0);
+  if(p1)p1.classList.toggle("on",i===1);
 }
 function mStName(s){
   return mCity==="台北"?("捷運"+s.n+"站"):(s.n+"駅");
@@ -1111,3 +1132,77 @@ function mToggleFullscreen(){
 window.addEventListener("resize",function(){if(mSvg){mMeasure();mApply();}});
 
 
+
+/* ================= 從行程匯入起訖點 ================= */
+var rpImpTrip=null, rpImpDay=0, rpImpFrom=null, rpImpTo=null;
+function rpImpOpen(){
+  /* 預設選目前正在編輯的行程,沒有就選第一個 */
+  if(!trips.length){toast("還沒有任何行程,先到行程頁建立一個");return;}
+  var exists=rpImpTrip&&trips.some(function(t){return t.id===rpImpTrip;});
+  if(!exists){rpImpTrip=(curTrip&&tripById(curTrip))?curTrip:trips[0].id;rpImpDay=0;}
+  rpImpFrom=null;rpImpTo=null;
+  rpImpRender();
+  $("mddBk").classList.add("show");
+  $("mddImp").classList.add("show");
+}
+function rpImpStops(){
+  var t=tripById(rpImpTrip); if(!t)return [];
+  var d=t.days[rpImpDay]; if(!d)return [];
+  return d.stops||[];
+}
+function rpImpRender(){
+  var t=tripById(rpImpTrip);
+  if(!t){$("rpImpBody").innerHTML='<p class="note">找不到行程</p>';return;}
+  var tripHtml=trips.map(function(x){
+    var n=x.days.reduce(function(a,d){return a+d.stops.length;},0);
+    return '<button type="button" class="imp-trip'+(x.id===rpImpTrip?" on":"")+'" data-t="'+attr(x.id)+'">'+
+      '<span class="nm">'+esc(x.name)+'<span class="sub">'+esc(tripRangeStr(x))+'・'+n+' 個地點</span></span>'+
+      (x.id===rpImpTrip?'<span class="ck">✓</span>':'')+'</button>';
+  }).join("");
+  var dayHtml=t.days.map(function(d,i){
+    return '<button type="button" class="imp-day'+(i===rpImpDay?" on":"")+'" data-d="'+i+'">D'+(i+1)+
+      '<small>'+d.stops.length+' 站</small></button>';
+  }).join("");
+  var stops=rpImpStops();
+  var stopHtml=stops.length?stops.map(function(s,i){
+    return '<div class="imp-stop">'+
+      '<span class="n">'+(i+1)+'</span>'+
+      '<span class="nm">'+esc(s.name)+'</span>'+
+      '<span class="pick">'+
+        '<button type="button" class="f'+(rpImpFrom===i?" on":"")+'" data-f="'+i+'">出發</button>'+
+        '<button type="button" class="t'+(rpImpTo===i?" on":"")+'" data-t2="'+i+'">目的</button>'+
+      '</span></div>';
+  }).join(""):'<p class="note">這天還沒有安排停靠點</p>';
+  var fromTxt=(rpImpFrom!=null&&stops[rpImpFrom])?stops[rpImpFrom].name:"(未選,可自己打)";
+  var toTxt=(rpImpTo!=null&&stops[rpImpTo])?stops[rpImpTo].name:"(未選,可自己打)";
+  $("rpImpBody").innerHTML=
+    '<div class="section-label" style="margin-top:0">選行程</div>'+tripHtml+
+    '<div class="section-label">選日期</div><div class="imp-days">'+dayHtml+'</div>'+
+    '<div class="section-label">點站名右邊,指定它當「出發」或「目的地」</div>'+stopHtml+
+    '<div class="imp-preview">出發:<b>'+esc(fromTxt)+'</b><br>目的地:<b>'+esc(toTxt)+'</b></div>'+
+    '<p class="note">也可以只選其中一個,另一個自己打。按「帶入」只會填進欄位,不會直接搜尋。</p>'+
+    '<button class="btn-primary" style="width:100%;margin-top:14px" onclick="rpImpApply()">帶入起訖點</button>';
+  $("rpImpBody").querySelectorAll("[data-t]").forEach(function(b){
+    b.onclick=function(){rpImpTrip=b.dataset.t;rpImpDay=0;rpImpFrom=null;rpImpTo=null;rpImpRender();};});
+  $("rpImpBody").querySelectorAll("[data-d]").forEach(function(b){
+    b.onclick=function(){rpImpDay=+b.dataset.d;rpImpFrom=null;rpImpTo=null;rpImpRender();};});
+  $("rpImpBody").querySelectorAll("[data-f]").forEach(function(b){
+    b.onclick=function(){var i=+b.dataset.f;rpImpFrom=(rpImpFrom===i)?null:i;
+      if(rpImpTo===rpImpFrom)rpImpTo=null;rpImpRender();};});
+  $("rpImpBody").querySelectorAll("[data-t2]").forEach(function(b){
+    b.onclick=function(){var i=+b.dataset.t2;rpImpTo=(rpImpTo===i)?null:i;
+      if(rpImpFrom===rpImpTo)rpImpFrom=null;rpImpRender();};});
+}
+function rpImpApply(){
+  var stops=rpImpStops();
+  if(rpImpFrom==null&&rpImpTo==null){toast("先指定出發或目的地");return;}
+  if(rpImpFrom!=null&&stops[rpImpFrom]){$("rpFrom").value=stops[rpImpFrom].name;rpFromPlace=null;}
+  if(rpImpTo!=null&&stops[rpImpTo]){$("rpTo").value=stops[rpImpTo].name;rpToPlace=null;}
+  mClosePick();
+  if($("rpBody").style.display==="none"){
+    $("rpBody").style.display="block";
+    $("rpCaret").textContent="輸入起訖點,依票券規劃 ⌃";
+    ensureGoogleMapsLoaded();
+  }
+  toast("已帶入起訖點");
+}

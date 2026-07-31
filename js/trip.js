@@ -242,14 +242,30 @@ function stopAddr(s){
   return (p&&p.addr)?p.addr:"";
 }
 function stopPlace(s){
-  if(!s||!s.pid)return null;
-  return places.filter(function(x){return x.id===s.pid;})[0]||null;
+  if(!s)return null;
+  if(s.pid)return places.filter(function(x){return x.id===s.pid;})[0]||null;
+  /* 臨時點:用名稱去比對口袋名單,對到就能沿用它的照片與分類 */
+  if(s.name){
+    var m=places.filter(function(x){return x.name===s.name;})[0];
+    if(m)return m;
+  }
+  return null;
+}
+/* 停靠點縮圖:有照片就顯示照片,沒有才退回依名稱產生的漸層色塊 */
+function stopThumb(s,p){
+  var key=s.pid||s.name;
+  var url=(p&&p.photoUrl)?p.photoUrl:null;
+  if(url){
+    return '<div class="stop2-thumb"><img src="'+attr(url)+'" alt="" loading="lazy" '+
+           'onerror="phThumbErr(this,\''+attr(key)+'\')"></div>';
+  }
+  return '<div class="stop2-thumb" style="background:'+placeGradient(key)+';"></div>';
 }
 function toggleStopExpand(i){
   expandedStop=(expandedStop===i)?null:i;
   renderRoute();
 }
-var esIdx=null, esPlace=null, esAutoDone=false;
+var esIdx=null, esPlace=null, esAutoDone=false, esLastAC="";
 function editStop(i){
   var s=route[i]; if(!s)return;
   esIdx=i; esPlace=null;
@@ -265,10 +281,18 @@ function esInitAutocomplete(){
   esAutoDone=true;
   var opts={fields:["place_id","formatted_address","name","geometry"]};
   var ac=new google.maps.places.Autocomplete($("esInput"),opts);
-  ac.addListener("place_changed",function(){esPlace=ac.getPlace();gTrackDetail("autocomplete");});
-  $("esInput").addEventListener("input",function(){esPlace=null;});
+  ac.addListener("place_changed",function(){
+    esPlace=ac.getPlace();
+    gTrackDetail("autocomplete");
+    /* Google 選完會把整串地址塞回輸入框,改回店名比較好讀,也避免地址被當成名稱存下去 */
+    if(esPlace&&esPlace.name){esLastAC=esPlace.name;$("esInput").value=esPlace.name;}
+    else{esLastAC=$("esInput").value;}
+  });
+  $("esInput").addEventListener("input",function(){
+    /* 只有「真的是使用者在改字」才清掉已選地點;Google 自己填值不算 */
+    if(this.value!==esLastAC)esPlace=null;
+  });
   $("esInput").addEventListener("keydown",function(e){
-    /* 從自動完成清單選字時會送出 keyCode 13,交給 Google 處理,不要當成送出 */
     if(e.key==="Enter"&&!e.isComposing){e.preventDefault();}
   });
 }
@@ -310,7 +334,7 @@ function renderRoute(){
     if(p&&(p.cat||p.dur))meta+='<div class="stop2-catdur">'+esc(p.cat||"")+(p.dur?'・'+durTxt(p.dur):'')+'</div>';
     if(addr)meta+='<div class="stop2-addr">📍 '+esc(addr)+'</div>';
     if(p&&p.note)meta+='<div class="stop2-note">📝 '+esc(p.note)+'</div>';
-    var thumbHtml='<div class="stop2-thumb" style="background:'+placeGradient(s.pid||s.name)+';"></div>';
+    var thumbHtml=stopThumb(s,p);
     var hasNext=i<route.length-1;
     var card='<div class="stop2" data-i="'+i+'">'+
       '<div class="stop2-line"><span class="num2'+(s.tmp?" tmp":"")+'">'+(i+1)+'</span>'+

@@ -351,6 +351,13 @@ document.addEventListener("click",function(e){
   if(e.target.closest(".stop-menu")||e.target.closest(".stop2-menubtn"))return;
   openMenuIdx=null;renderRoute();
 });
+/* 停靠點編輯用的「景點類型」下拉，選項跟口袋名單的分類一致 */
+function fillCatSelect(id){
+  var el=$(id); if(!el)return;
+  var list=(typeof cats!=="undefined"&&cats&&cats.length)?cats:["景點","美食","購物","住宿","交通","其他"];
+  el.innerHTML='<option value="">景點類型(選填)</option>'+
+    list.map(function(c){return '<option value="'+attr(c)+'">'+esc(c)+'</option>';}).join("");
+}
 var esIdx=null, esPlace=null, esAutoDone=false, esLastAC="";
 function editStop(i){
   var s=route[i]; if(!s)return;
@@ -358,6 +365,10 @@ function editStop(i){
   openMenuIdx=null;
   $("esInput").value=s.name||"";
   $("esTime").value=s.time||"";
+  fillCatSelect("esCat");
+  var esP=stopPlace(s);
+  $("esCat").value=(esP&&esP.cat)||s.cat||"";
+  $("esDur").value=String((esP&&esP.dur)||s.dur||"");
   $("esBk").classList.add("show");
   $("esSheet").classList.add("show");
   ensureGoogleMapsLoaded();
@@ -394,6 +405,8 @@ function saveEditStop(){
   var val=$("esInput").value.trim();
   if(!val){toast("請輸入地點名稱");return;}
   var item={name:val,pid:null,tmp:true,time:$("esTime").value||""};
+  if($("esCat").value)item.cat=$("esCat").value;
+  if($("esDur").value)item.dur=parseFloat($("esDur").value);
   if(esPlace&&esPlace.geometry&&esPlace.geometry.location){
     item.lat=esPlace.geometry.location.lat();
     item.lng=esPlace.geometry.location.lng();
@@ -424,7 +437,11 @@ function renderRoute(){
     var addr=stopAddr(s);
     var p=stopPlace(s);
     var desc=(p&&p.autoDesc)||s.autoDesc||"";
-    var catLine=(p&&(p.cat||p.dur))?(esc(p.cat||"")+(p.dur?'・'+durTxt(p.dur):'')):(s.tmp?"臨時地點":"");
+    var sCat=(p&&p.cat)||s.cat||(s.tmp?"臨時地點":"");
+    var sDur=(p&&p.dur)||s.dur||0;
+    var catLine=sCat?esc(sCat):"";
+    if(sDur)catLine=catLine?(catLine+" · "+durTxt(sDur)):durTxt(sDur);
+    else if(catLine)catLine+=" · 未設定停留";
     var meta='';
     if(exp){
       if(desc)meta+='<div class="stop2-desc">'+esc(desc)+'</div>';
@@ -441,7 +458,7 @@ function renderRoute(){
     var legHtml="";
     if(hasNext){
       var lm=legMode(i);
-      legHtml='<div class="stop2-connector"><span class="seg"></span>'+
+      legHtml='<div class="stop2-connector">'+
         '<button type="button" class="leg-badge" data-leg2="'+i+'" id="legbadge-'+i+'" title="'+attr(LEG_MODE_LABEL[lm]+" · 點一下切換")+'">'+LEG_MODE_ICON[lm]+'</button>'+
         '<span class="seg"></span></div>';
     }
@@ -453,14 +470,14 @@ function renderRoute(){
         '<div class="stop2-main">'+
           '<div style="flex:1;min-width:0;">'+
             '<div class="stop2-nameblock">'+
-              '<div class="stop2-nameline"><span class="stop2-name">'+esc(s.name)+'</span>'+(catLine?'<span class="stop2-catdur">'+catLine+'</span>':'')+'</div>'+
-              '<button type="button" class="stop2-editbtn" data-edit="'+i+'" aria-label="編輯地點/時間">⋯</button>'+
+              '<div class="stop2-nametxt"><span class="stop2-name">'+esc(s.name)+'</span>'+(catLine?'<span class="stop2-catdur">'+catLine+'</span>':'')+'</div>'+
+              '<button type="button" class="stop2-editbtn" data-edit="'+i+'" aria-label="編輯地點/時間">⋮</button>'+
             '</div>'+
             (meta?'<div class="stop2-meta">'+meta+'</div>':'')+
           '</div>'+
           thumbHtml+
           '<div class="stop2-morewrap">'+
-            '<button type="button" class="stop2-menubtn" data-menu="'+i+'" aria-label="更多">⋯</button>'+
+            '<button type="button" class="stop2-menubtn" data-menu="'+i+'" aria-label="更多">⋮</button>'+
             (openMenuIdx===i?moveMenuHtml(i):'')+
           '</div>'+
         '</div>'+
@@ -736,6 +753,9 @@ function openAddStop(){
   asPlace=null;
   $("asName").value="";
   $("asTime").value="";
+  fillCatSelect("asCat");
+  $("asCat").value="";
+  $("asDur").value="";
   $("asSaveToPocket").checked=false;
   $("asBk").classList.add("show");
   $("asSheet").classList.add("show");
@@ -767,6 +787,8 @@ function saveAddStop(){
   var n=$("asName").value.trim();
   if(!n){$("asName").focus();return;}
   var stop={name:n,pid:null,tmp:true,time:$("asTime").value||""};
+  if($("asCat").value)stop.cat=$("asCat").value;
+  if($("asDur").value)stop.dur=parseFloat($("asDur").value);
   if(asPlace&&asPlace.geometry&&asPlace.geometry.location){
     stop.lat=asPlace.geometry.location.lat();
     stop.lng=asPlace.geometry.location.lng();
@@ -775,7 +797,8 @@ function saveAddStop(){
   route.push(stop);
   var newIdx=route.length-1;
   if($("asSaveToPocket").checked&&!hasPlace(n)){
-    var item={id:uid(),name:n,cat:guessCat(n),list:lists[0]||"未分類",note:"",done:false};
+    var item={id:uid(),name:n,cat:$("asCat").value||guessCat(n),list:lists[0]||"未分類",note:"",done:false};
+    if(stop.dur)item.dur=stop.dur;
     if(stop.lat!=null){item.lat=stop.lat;item.lng=stop.lng;}
     places.unshift(item);
     save();

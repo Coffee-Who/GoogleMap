@@ -144,89 +144,113 @@ var PASS_CATALOG=[
  {id:"jr_kansai_1",cat:"JR系",name:"JR關西地區鐵路周遊券・1日券",region:"大阪・京都・神戶・姫路",price:"成人 ¥2,800",
   url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansai/",
   img:"https://www.westjr.co.jp/travel-information/tc/assets/img/tickets-passes/jrwest-rail-pass/kansai_map.jpg",
-  desc:"可自由搭乘大阪、京都、神戶、姫路一帶的JR普通・快速・新快速列車,含HARUKA指定席2次,不含新幹線。",kind:"jr"},
+  photo:"https://www.westjr.co.jp/travel-information/assets/img/tickets-passes/jrwest-rail-pass/img_kansai_01.webp",
+  desc:"可自由搭乘大阪、京都、神戶、姫路一帶的JR普通・快速・新快速列車,含HARUKA指定席2次,不含新幹線。",kind:"jr",
+  note:"官方已公告本票種將停售:兌換券最後發售2026/6/30,車站換票最後2026/9/29,最晚可用到2026/11/1,詳見官網公告"},
  {id:"jr_kansai_2",cat:"JR系",name:"JR關西地區鐵路周遊券・2日券",region:"大阪・京都・神戶・姫路",price:"成人 ¥4,800",
   url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansai/",
   img:"https://www.westjr.co.jp/travel-information/tc/assets/img/tickets-passes/jrwest-rail-pass/kansai_map.jpg",
-  desc:"範圍與1日券相同,適合停留2天以上的行程。",kind:"jr"},
+  photo:"https://www.westjr.co.jp/travel-information/assets/img/tickets-passes/jrwest-rail-pass/img_kansai_02.webp",
+  desc:"範圍與1日券相同,適合停留2天以上的行程。",kind:"jr",
+  note:"官方已公告本票種將停售:最晚可用到2026/11/1,詳見官網公告"},
  {id:"jr_kansai_3",cat:"JR系",name:"JR關西地區鐵路周遊券・3日券",region:"大阪・京都・神戶・姫路",price:"成人 ¥5,800",
   url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansai/",
   img:"https://www.westjr.co.jp/travel-information/tc/assets/img/tickets-passes/jrwest-rail-pass/kansai_map.jpg",
-  desc:"範圍與1日券相同,適合停留3天以上的行程。",kind:"jr"},
+  photo:"https://www.westjr.co.jp/travel-information/assets/img/tickets-passes/jrwest-rail-pass/img_kansai_03.webp",
+  desc:"範圍與1日券相同,適合停留3天以上的行程。",kind:"jr",
+  note:"官方已公告本票種將停售:最晚可用到2026/11/1,詳見官網公告"},
  {id:"jr_kansai_4",cat:"JR系",name:"JR關西地區鐵路周遊券・4日券",region:"大阪・京都・神戶・姫路",price:"成人 ¥7,000",
   url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansai/",
   img:"https://www.westjr.co.jp/travel-information/tc/assets/img/tickets-passes/jrwest-rail-pass/kansai_map.jpg",
-  desc:"範圍與1日券相同,適合停留4天以上的行程。",kind:"jr"},
+  photo:"https://www.westjr.co.jp/travel-information/assets/img/tickets-passes/jrwest-rail-pass/img_kansai_01.webp",
+  desc:"範圍與1日券相同,適合停留4天以上的行程。",kind:"jr",
+  note:"官方已公告本票種將停售:最晚出發日2026/10/29,詳見官網公告"},
  {id:"jr_wide_5",cat:"JR系",name:"JR關西廣域鐵路周遊券・5日券",region:"關西全域・岡山・鳥取・城崎",price:"成人 ¥12,000",
   url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansai_wide/",
   img:"https://www.westjr.co.jp/travel-information/tc/assets/img/tickets-passes/jrwest-rail-pass/kansai_wide_map.jpg",
+  photo:"https://www.westjr.co.jp/travel-information/assets/img/tickets-passes/jrwest-rail-pass/img_kansai_wide_01.webp",
   desc:"涵蓋範圍比地區版更廣,含山陽新幹線新大阪⇔岡山指定席與HARUKA等特急列車。",kind:"jr",
   note:"可延伸至岡山、鳥取、城崎,超出本圖範圍,詳見官方地圖"},
  {id:"jr_mini",cat:"JR系",name:"JR關西迷你鐵路周遊券",region:"大阪・京都・難波・神戶・奈良",price:"價格請查官方頁",
   url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansaimini/",
   img:null,
+  photo:"https://www.westjr.co.jp/travel-information/assets/img/tickets-passes/jrwest-rail-pass/img_kansaimini_01.webp",
   desc:"範圍比地區版略小,主打大阪、京都、難波、神戶、奈良之間移動。",kind:"jr"},
  {id:"jr_hiroshima",cat:"JR系",name:"JR關西&廣島地區鐵路周遊券",region:"關西・岡山・廣島",price:"價格請查官方頁",
   url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansai_hiroshima/",
   img:null,
+  photo:"https://www.westjr.co.jp/travel-information/assets/img/tickets-passes/jrwest-rail-pass/img_kansai_hiroshima_01.webp",
   desc:"關西加碼延伸到廣島、宮島一帶,含JR西日本宮島渡輪。",kind:"jr",
   note:"可延伸至岡山、廣島,超出本圖範圍,詳見官方地圖"},
  {id:"jr_sanin",cat:"JR系",name:"JR關西&山陰地區鐵路周遊券",region:"關西・城崎・鳥取",price:"價格請查官方頁",
   url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/jrwest-rail-pass/kansai_sanin/",
   img:null,
+  photo:"https://www.westjr.co.jp/travel-information/assets/img/tickets-passes/jrwest-rail-pass/img_kansai_sanin_01.webp",
   desc:"關西加碼延伸到城崎溫泉、鳥取砂丘一帶的山陰地區。",kind:"jr",
   note:"可延伸至城崎、鳥取,超出本圖範圍,詳見官方地圖"},
  {id:"haruka",cat:"JR系",name:"HARUKA 單程優惠票",region:"關西機場↔大阪／京都",price:"價格依區間請查官方頁",
   url:"https://www.westjr.co.jp/travel-information/tc/tickets-passes/oneway/haruka/",img:null,
+  photo:"https://www.westjr.co.jp/travel-information/en/assets/img/tickets-passes/oneway/img_haruka.jpg",
   desc:"關西機場往返大阪、京都的特急HARUKA單程優惠票,適合只需要機場接駁的旅客。",
   kind:"single",excludeFromReco:true,singleTrip:true},
  {id:"kintetsu",cat:"近鐵系",name:"近鐵電車周遊券(KINTETSU RAIL PASS 系列)",region:"大阪・奈良・伊勢・名古屋",
   price:"依版本不同,請查官方頁",
   url:"https://www.kintetsu.co.jp/foreign/chinese-han/ticket/",img:null,
+  photo:"https://www.kintetsu.co.jp/foreign/assets/ticket/images/ticket_kv_pic01.jpg",
   desc:"近鐵電車全線周遊券,依範圍與天數分好幾種版本,適合會去奈良、伊勢志摩,甚至一路到名古屋的行程。",
-  kind:"kintetsu",note:"部分版本可延伸至伊勢、名古屋,超出本圖範圍"},
+  kind:"kintetsu",note:"部分版本可延伸至伊勢、名古屋,超出本圖範圍;2025/4起已全面改為手機數位票,沒有實體卡了"},
  {id:"keihan_ko_1d",cat:"京阪系",name:"京都、大阪觀光一日券",region:"京都・大阪(京阪沿線)",price:"成人 ¥1,650",
   url:"https://www.keihan.co.jp/travel/tw/trains/passes-for-visitors-to-japan/kyoto-osaka.html",
   img:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-sightseeing-pass/img_specialsightseeingpass_pass_01.jpg",
+  photo:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-sightseeing-pass/img_specialsightseeingpass_pass_01.jpg",
   desc:"京阪電車(大津線除外)、宇治線、交野線、石清水八幡宮參道纜車自由上下車。",kind:"keihan_main"},
  {id:"keihan_ko_24h",cat:"京阪系",name:"京都、大阪觀光24小時券",region:"京都・大阪(京阪沿線)",price:"成人 ¥1,850",
   url:"https://www.keihan.co.jp/travel/tw/trains/passes-for-visitors-to-japan/kyoto-osaka.html",
   img:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-sightseeing-pass/img_specialsightseeingpass_pass_01.jpg",
+  photo:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-sightseeing-pass/img_specialsightseeingpass_pass_01.jpg",
   desc:"範圍與一日券相同,從啟用時刻起算24小時內有效,彈性較高。",kind:"keihan_main"},
  {id:"keihan_k_1d",cat:"京阪系",name:"京都觀光一日券",region:"京都(京阪沿線)",price:"成人 ¥1,100",
   url:"https://www.keihan.co.jp/travel/tw/trains/passes-for-visitors-to-japan/kyoto-osaka.html",
   img:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-sightseeing-pass/img_specialsightseeingpass_pass_02.jpg",
+  photo:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-sightseeing-pass/img_specialsightseeingpass_pass_02.jpg",
   desc:"京都市內京阪電車路段自由上下車,範圍比大阪版小,價格也較低。",kind:"keihan_main"},
  {id:"keihan_k_24h",cat:"京阪系",name:"京都觀光24小時券",region:"京都(京阪沿線)",price:"成人 ¥1,300",
   url:"https://www.keihan.co.jp/travel/tw/trains/passes-for-visitors-to-japan/kyoto-osaka.html",
   img:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-sightseeing-pass/img_specialsightseeingpass_pass_02.jpg",
+  photo:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-sightseeing-pass/img_specialsightseeingpass_pass_02.jpg",
   desc:"範圍與京都一日券相同,24小時制。",kind:"keihan_main"},
  {id:"keihan_osaka_metro",cat:"京阪系",name:"京阪+Osaka Metro觀光乘車券・一日券",region:"京都(京阪)・大阪地鐵",
   price:"成人 ¥2,160",
   url:"https://www.keihan.co.jp/travel/tw/trains/passes-for-visitors-to-japan/osaka-subway.html",
   img:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-osaka/img_specialsightseeingpass_pass.jpg",
+  photo:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-osaka/img_specialsightseeingpass_pass.jpg",
   desc:"京阪電車再加碼大阪地鐵(Osaka Metro)與市巴士(部分路線除外)全線自由搭乘。",kind:"keihan_osaka"},
  {id:"keihan_eizan",cat:"京阪系",name:"京都、大阪觀光乘車券(鞍馬&貴船地區擴大版)・一日券",region:"京都北部(鞍馬・貴船)",
   price:"成人 ¥2,100",
   url:"https://www.keihan.co.jp/travel/tw/trains/passes-for-visitors-to-japan/eizan-railway.html",
   img:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-eizan-railway/img_special_eizanrailway_pass.jpg",
+  photo:"https://www.keihan.co.jp/travel/common/img/trains/passes-for-visitors-to-japan/special-eizan-railway/img_special_eizanrailway_pass.jpg",
   desc:"京阪電車再加碼叡山電車,可以到京都北部的鞍馬、貴船神社一帶。",kind:"keihan_eizan"},
  {id:"krp_lite_2d",cat:"私鐵地鐵周遊券系",name:"KANSAI RAILWAY PASS LITE・2日券",
   region:"大阪・京都・奈良・神戶/姫路・和歌山",price:"成人 ¥5,200",
   url:"https://www.surutto.com/kansai_rwpl/zh-TW/krp.html",
   img:"https://www.surutto.com/kansai_rwpl/assets/images/areamap_tw.jpg",
+  photo:"https://www.surutto.com/kansai_rwpl/assets/images/useticket_CPM_en.png",photoFit:"contain",
   desc:"舊稱 KANSAI THRU PASS。關西各地地下鐵、私鐵幾乎都能搭,但不含JR、京都市營地下鐵、京阪大津線、嵐電與公車。",
-  kind:"krplite"},
+  kind:"krplite",note:"2026/4改版後不含京都地鐵、京阪大津線,現在是純手機電子票"},
  {id:"krp_lite_3d",cat:"私鐵地鐵周遊券系",name:"KANSAI RAILWAY PASS LITE・3日券",
   region:"大阪・京都・奈良・神戶/姫路・和歌山",price:"成人 ¥6,500",
   url:"https://www.surutto.com/kansai_rwpl/zh-TW/krp.html",
   img:"https://www.surutto.com/kansai_rwpl/assets/images/areamap_tw.jpg",
-  desc:"範圍與2日券相同,多一天可用。",kind:"krplite"},
+  photo:"https://www.surutto.com/kansai_rwpl/assets/images/useticket_CPM_en.png",photoFit:"contain",
+  desc:"範圍與2日券相同,多一天可用。",kind:"krplite",
+  note:"2026/4改版後不含京都地鐵、京阪大津線,現在是純手機電子票"},
  {id:"osaka_amazing",cat:"特定城市周遊票系",name:"Osaka Amazing Pass",region:"大阪市區(含私鐵短程段)",
-  price:"依1日／2日版本,請查官方頁",
-  url:"https://osaka-amazing-pass.com/cht/",img:null,
+  price:"數位版 1日 ¥3,500 ／ 2日 ¥5,000",
+  url:"https://osaka-amazing-pass.com/",img:null,
+  photo:"https://osaka-amazing-pass.com/resource/img/top_slide_2b.png",
   desc:"大阪地鐵、市巴士全線自由搭乘,加上大阪市區內的阪急、阪神、京阪、近鐵、南海路段,還能免費進約40個景點設施。",
-  kind:"osaka_amazing"}
+  kind:"osaka_amazing",note:"官網已改版為「Surutto Qrtto」數位票,舊版實體卡(藍色富士山圖案那款)已停售"}
 ];
 var PP_OSAKA_METRO_LINES=["御堂筋線","中央線","堺筋線","谷町線","四つ橋線","千日前線","長堀鶴見緑地線"];
 var PASS_AREA_KEYWORDS={
@@ -291,22 +315,36 @@ function ppRender(){
   $("ppBody").innerHTML=html;
   ppBindReco();
 }
-function ppItemHtml(p){
-  return '<details class="pp-item"><summary>'+
-    '<div class="pp-ic">🎫</div>'+
-    '<div style="flex:1;min-width:0"><div class="pp-nm">'+esc(p.name)+'</div>'+
+var PP_TICKET_GRADIENTS=[
+  "linear-gradient(135deg,#1c3a63,#2c5a92)",
+  "linear-gradient(135deg,#1f5a3a,#2f8a58)",
+  "linear-gradient(135deg,#432c78,#6845b0)",
+  "linear-gradient(135deg,#7a4a1c,#b8752c)",
+  "linear-gradient(135deg,#7a1c3a,#b82c5a)"
+];
+function ppItemHtml(p,i){
+  var hasPhoto=!!p.photo;
+  var bgStyle=hasPhoto?"background-image:url('"+p.photo+"')":"background:"+PP_TICKET_GRADIENTS[i%PP_TICKET_GRADIENTS.length]+";";
+  var fitClass=(p.photoFit==="contain")?" pp-fit-contain":"";
+  var badge=hasPhoto?"官方宣傳圖":"尚無官方照片";
+  return '<details class="pp-item'+fitClass+'"><summary style="'+bgStyle+'">'+
+    '<span class="pp-badge">'+badge+'</span>'+
+    '<div class="pp-ic">'+
+    '<div class="pp-item-top"><div class="pp-nm">'+esc(p.name)+'</div>'+
+    '<span class="pp-price">'+esc(p.price)+'</span></div>'+
     '<span class="pp-tag">'+esc(p.region)+'</span></div>'+
-    '<span style="font-size:12.5px;font-weight:700;color:var(--a-text);white-space:nowrap;margin-left:8px">'+esc(p.price)+'</span>'+
     '<span class="pp-car">⌄</span></summary>'+
     '<div class="pp-detail">'+
-    (p.img?'<img src="'+p.img+'" alt="'+esc(p.name)+' 官方區域地圖" style="width:100%;border-radius:12px;display:block;margin:10px 0" />':'')+
+    (p.img?'<p class="pp-detail-maplbl">🗺️ 使用範圍地圖</p><img src="'+p.img+'" alt="'+esc(p.name)+' 官方區域地圖" />':'')+
     '<p>'+esc(p.desc)+'</p>'+
     (p.note?'<div class="pp-warn">⚠ '+esc(p.note)+'</div>':'')+
     '<a class="pp-link" href="'+p.url+'" target="_blank" rel="noopener">前往官方頁 ↗</a></div></details>';
 }
 function ppRecoHtml(){
   return '<div class="pp-reco">'+
-    '<div class="pp-reco-hd">✨ 依你的行程推薦票券</div>'+
+    '<button type="button" class="pp-reco-toggle" id="ppRecoToggle" aria-expanded="false">'+
+      '✨ 依你的行程推薦票券<span class="pp-reco-car">⌄</span></button>'+
+    '<div class="pp-reco-bd" id="ppRecoBd">'+
     '<p class="hint" style="margin:0 0 8px">輸入想去的地點(一個地點一個欄位),幫你比對最適合的票券(僅比對本圖收錄的大阪／京都／關西全域車站資料,無法涵蓋所有景點)</p>'+
     '<button type="button" id="ppImportTripBtn" style="width:100%;margin-bottom:10px;border-style:dashed">📥 從行程帶入地點</button>'+
     '<div id="ppPlaceList">'+
@@ -319,7 +357,7 @@ function ppRecoHtml(){
       '<div class="f"><label>天數</label><input type="text" id="ppDays" placeholder="例如 2 天"></div>'+
     '</div>'+
     '<button class="btn-primary" style="width:100%" onclick="ppRecommend()">推薦適合的票券</button>'+
-    '<div id="ppRecoRes"></div></div>';
+    '<div id="ppRecoRes"></div></div></div>';
 }
 function ppAttachAutocomplete(inp){
   if(!window.google||!google.maps||!google.maps.places)return;
@@ -345,8 +383,14 @@ function ppInitRecoAutocomplete(){
   document.querySelectorAll(".pp-place-input").forEach(ppAttachAutocomplete);
 }
 function ppBindReco(){
-  ppInitRecoAutocomplete();
-  if(gKey())ensureGoogleMapsLoaded();
+  var toggle=$("ppRecoToggle"),bd=$("ppRecoBd");
+  if(toggle&&bd){
+    toggle.onclick=function(){
+      var open=bd.classList.toggle("show");
+      toggle.setAttribute("aria-expanded",open?"true":"false");
+      if(open){ppInitRecoAutocomplete();if(gKey())ensureGoogleMapsLoaded();}
+    };
+  }
   var addBtn=$("ppAddPlace");
   if(!addBtn)return;
   addBtn.onclick=function(){

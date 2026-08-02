@@ -106,13 +106,13 @@
     <div class="section-label dlbl" id="dayLabel"><span id="dayLabelTxt">停靠順序</span><span style="display:flex;align-items:center;gap:12px;"><button type="button" class="btn-icon" id="btnAddStop" title="新增停靠點" aria-label="新增停靠點">＋</button><span id="dayLabelChev">▾</span></span></div>
     <div id="routeOrder"></div>
 
-    <div class="notice warn" id="transitNote" style="display:none;">ⓘ 這段路線含大眾運輸,Google 限制一次僅能單段導航,已自動拆成分段,搭完一段按下一段。</div>
+    <div class="notice warn" id="transitNote" style="display:none;">ⓘ 含大眾運輸,Google 一次只能導一段。走完一段就點景點旁的圓圈打勾,導航按鈕會自動跳到下一段。</div>
     <div class="notice warn" id="maxNote" style="display:none;">ⓘ 停靠點超過 9 個,Google 地圖一次最多帶 9 個停靠點,超出的請分段導航或分成兩條路線。</div>
-    <div class="row" id="goMapRow" style="margin-top:10px;align-items:stretch;">
-      <div id="goArea" style="flex:1.6;"></div>
-      <button type="button" class="btn-sm" id="rMapToggle" style="flex:1;justify-content:center;white-space:nowrap;">🗺️ 顯示路線地圖</button>
+    <div id="goArea" style="margin-top:12px;"></div>
+    <div id="routeMapWrap" style="margin-top:14px;">
+      <button type="button" class="btn-sm" id="rMapToggle" style="width:100%;justify-content:center;white-space:nowrap;">🗺️ 顯示路線地圖</button>
+      <div id="rMapBox" style="display:none;height:240px;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin:10px 0 12px;background:var(--card2);"></div>
     </div>
-    <div id="rMapBox" style="display:none;height:220px;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin:10px 0 12px;background:var(--card2);"></div>
   </div>
 
   <div id="spotPicker" style="display:none;">
@@ -510,7 +510,7 @@
   <div class="sheet-hd"><h3>編輯地點</h3><button class="x" onclick="closeEditStop()">&times;</button></div>
   <input type="text" id="esInput" placeholder="輸入地點(車站、飯店、景點…)" autocomplete="off" style="margin-bottom:10px">
   <div class="row" style="align-items:center;gap:8px;margin-bottom:8px;">
-    <label style="font-size:13px;color:var(--text2);flex-shrink:0;">時間</label>
+    <label style="font-size:13px;color:var(--text2);flex-shrink:0;">開始時間</label>
     <input type="time" id="esTime">
   </div>
   <div class="row" style="gap:8px;margin-bottom:6px;">
@@ -530,7 +530,7 @@
   <div class="sheet-hd"><h3>新增停靠點</h3><button class="x" onclick="closeAddStop()">&times;</button></div>
   <input type="text" id="asName" placeholder="地點名稱(車站、飯店…)" autocomplete="off" style="margin-bottom:10px">
   <div class="row" style="align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-    <label style="font-size:13px;color:var(--text2);flex-shrink:0;">時間</label>
+    <label style="font-size:13px;color:var(--text2);flex-shrink:0;">開始時間</label>
     <input type="time" id="asTime">
     <label style="margin-left:auto;font-size:12.5px;color:var(--text2);display:flex;align-items:center;gap:5px;">
       <input type="checkbox" id="asSaveToPocket" style="margin:0;">同時存入口袋名單

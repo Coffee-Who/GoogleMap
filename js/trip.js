@@ -428,6 +428,14 @@ function moveMenuHtml(i){
     '<button type="button" class="del" data-rm="'+i+'">'+IC.x+'<span>刪除</span></button>'+
   '</div>';
 }
+/* 停靠點 i 對應的是「上一站 → 這一站」那一段;不用目前位置時第一站沒有對應段 */
+function legIdxOfStop(i){return useCur?i:i-1;}
+function stopChkHtml(i){
+  var k=legIdxOfStop(i);
+  if(k<0)return '<span class="stop2-chk" style="visibility:hidden"></span>';
+  return '<button type="button" class="stop2-chk'+(doneLeg[k]?" on":"")+'" data-chk="'+k+'" '+
+    'aria-label="'+(doneLeg[k]?"取消完成":"標記已完成")+'">✓</button>';
+}
 function renderRoute(){
   if(expandedStop!=null&&expandedStop>=route.length)expandedStop=null;
   if(openMenuIdx!=null&&openMenuIdx>=route.length)openMenuIdx=null;
@@ -460,7 +468,7 @@ function renderRoute(){
       var lm=legMode(i);
       legHtml='<div class="stop2-connector">'+
         '<button type="button" class="leg-badge" data-leg2="'+i+'" id="legbadge-'+i+'" title="'+attr(LEG_MODE_LABEL[lm]+" · 點一下切換")+'">'+LEG_MODE_ICON[lm]+'</button>'+
-        '<span class="seg"></span></div>';
+        '<span class="legline"></span></div>';
     }
     var card='<div class="stop2" data-i="'+i+'">'+
       '<div class="stop2-line"><div class="stop2-time'+(timeVal?" set":"")+'">'+(timeVal?esc(timeVal):"--:--")+'</div>'+
@@ -470,7 +478,10 @@ function renderRoute(){
         '<div class="stop2-main">'+
           '<div style="flex:1;min-width:0;">'+
             '<div class="stop2-nameblock">'+
-              '<div class="stop2-nametxt"><span class="stop2-name">'+esc(s.name)+'</span>'+(catLine?'<span class="stop2-catdur">'+catLine+'</span>':'')+'</div>'+
+              '<div class="stop2-nametxt">'+
+                '<div class="stop2-nameline">'+stopChkHtml(i)+'<span class="stop2-name">'+esc(s.name)+'</span></div>'+
+                (catLine?'<span class="stop2-catdur">'+catLine+'</span>':'')+
+              '</div>'+
               '<button type="button" class="stop2-editbtn" data-edit="'+i+'" aria-label="編輯地點/時間">⋮</button>'+
             '</div>'+
             (meta?'<div class="stop2-meta">'+meta+'</div>':'')+
@@ -488,8 +499,16 @@ function renderRoute(){
   }).join(""):'<p class="empty">還沒有停靠點,按上方「＋」新增。</p>');
   $("routeOrder").querySelectorAll("[data-toggle]").forEach(function(el){
     el.addEventListener("click",function(e){
-      if(e.target.closest(".stop2-morewrap")||e.target.closest(".stop2-editbtn")||e.target.closest(".addr-toggle"))return;
+      if(e.target.closest(".stop2-morewrap")||e.target.closest(".stop2-editbtn")||e.target.closest(".addr-toggle")||e.target.closest(".stop2-chk"))return;
       toggleStopExpand(+el.dataset.toggle);
+    });
+  });
+  $("routeOrder").querySelectorAll("[data-chk]").forEach(function(b){
+    b.addEventListener("click",function(e){
+      e.stopPropagation();
+      var k=+b.dataset.chk;
+      if(doneLeg[k])delete doneLeg[k]; else doneLeg[k]=true;
+      renderRoute();renderGo();
     });
   });
   $("routeOrder").querySelectorAll("[data-menu]").forEach(function(b){
@@ -727,23 +746,26 @@ function renderGo(){
     });
     return;
   }
-  var h='<div class="section-label" style="margin-top:0;">分段導航・共 '+legTotal+' 段</div>';
+  var doneN=0, nextLeg=-1;
   for(var k2=0;k2<legTotal;k2++){
-    var fi=useCur?k2-1:k2, ti=useCur?k2:k2+1;
-    var from=fi<0?"目前位置":route[fi].name, to=route[ti].name, ok=doneLeg[k2];
-    var lm2=modesArr[k2];
-    h+='<button class="leg'+(ok?" ok2":"")+'" data-leg="'+k2+'">'+
-    '<span class="num">'+(ok?"✓":(k2+1))+'</span>'+
-    '<span class="t">'+LEG_MODE_ICON[lm2]+' '+esc(from)+' → '+esc(to)+'</span><span style="display:inline-flex;color:var(--accent);">'+IC.ext+'</span></button>';
+    if(doneLeg[k2])doneN++;
+    else if(nextLeg<0)nextLeg=k2;
   }
-  $("goArea").innerHTML=h;
-  $("goArea").querySelectorAll("[data-leg]").forEach(function(b){
-    b.addEventListener("click",function(){
-      var k=+b.dataset.leg, fi=useCur?k-1:k, ti=useCur?k:k+1, lm=legEffModeAt(k);
-      var u="https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(route[ti].name)+"&travelmode="+lm;
-      if(fi>=0)u+="&origin="+encodeURIComponent(route[fi].name);
-      doneLeg[k]=true;renderGo();window.open(u,"_blank");
-    });
+  if(nextLeg<0){
+    $("goArea").innerHTML='<button class="btn-primary" id="goReset">✓ 這天的 '+legTotal+' 段都走完了・重設進度</button>';
+    $("goReset").addEventListener("click",function(){doneLeg={};renderRoute();renderGo();});
+    return;
+  }
+  var nfi=useCur?nextLeg-1:nextLeg, nti=useCur?nextLeg:nextLeg+1;
+  var nFrom=nfi<0?"目前位置":route[nfi].name, nTo=route[nti].name;
+  $("goArea").innerHTML='<button class="btn-primary" id="goLeg">'+LEG_MODE_ICON[modesArr[nextLeg]]+
+    ' 導航這一段・'+esc(nFrom)+' → '+esc(nTo)+'</button>'+
+    '<p class="go-hint">共 '+legTotal+' 段,已完成 '+doneN+' 段・可點景點旁的圓圈自己改進度</p>';
+  $("goLeg").addEventListener("click",function(){
+    var lm=legEffModeAt(nextLeg);
+    var u="https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(nTo)+"&travelmode="+lm;
+    if(nfi>=0)u+="&origin="+encodeURIComponent(nFrom);
+    doneLeg[nextLeg]=true;renderRoute();renderGo();window.open(u,"_blank");
   });
 }
 if($("rq"))$("rq").addEventListener("input",function(){rqText=this.value.trim();renderRoutePick();});

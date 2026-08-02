@@ -138,10 +138,10 @@ button:active{transform:scale(.98);}
 /* 連接線容器:交通方式圖示疊在線中間(取代原本整排的 legrow) */
 /* 連接線拆成上下兩段,中間留空放交通方式圖示,不需外框也不會被線穿過 */
 .stop2-connector{flex:1; display:flex; flex-direction:column; align-items:center; margin-top:6px; min-height:52px; width:100%;}
-.stop2-connector .seg{flex:1; width:2px; background:var(--stroke2); border-radius:1px; min-height:14px;}
-.leg-badge{border:none; background:var(--a-tint); box-shadow:none; padding:0; margin:0 0 4px;
-  width:24px; height:24px; border-radius:50%; font-size:13px; line-height:1; cursor:pointer;
-  display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.stop2-connector .legline{flex:1; width:2px; background:var(--stroke2); border-radius:1px; min-height:14px; margin-top:4px;}
+.leg-badge{border:none; background:var(--a-tint); box-shadow:none; padding:0; margin:6px 0 0;
+  width:24px; height:24px; min-height:0; min-width:0; border-radius:50%; font-size:13px; line-height:1;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
 .stop2-right{flex:1; min-width:0; display:flex; flex-direction:column;}
 .stop2-card{flex:1; min-width:0; border-radius:12px; padding:2px 0;}
 .stop2-main{flex:1; min-width:0; display:flex; align-items:center; gap:10px; cursor:pointer;}
@@ -170,7 +170,14 @@ html[data-theme="light"] .stop-menu{background:var(--surface2);}
 /* 名稱+類型合併一行,超出用刪節號 */
 .stop2-nameblock{display:flex; align-items:center; gap:4px;}
 .stop2-nametxt{flex:1; min-width:0;}
-.stop2-name{display:block; font-size:15.5px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.stop2-nameline{display:flex; align-items:center; gap:7px; min-width:0;}
+.stop2-name{flex:1; min-width:0; font-size:15.5px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.stop2-chk{flex-shrink:0; width:17px; height:17px; min-height:0; min-width:0; padding:0; margin:0;
+  border-radius:50%; border:1.5px solid var(--stroke2); background:transparent; cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center; font-size:11px; line-height:1; color:transparent;}
+.stop2-chk.on{background:#4bbd93; border-color:#4bbd93; color:#06301f;}
+#goArea .btn-primary{width:100%; margin:0;}
+#goArea .go-hint{font-size:11.5px; color:var(--muted); text-align:center; margin:7px 0 0;}
 .stop2-meta{margin-top:4px;}
 .stop2-addr{font-size:11px; color:var(--muted); margin-top:4px;}
 .stop2-catdur{display:block; font-size:12.5px; color:var(--muted); margin-top:4px;

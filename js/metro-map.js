@@ -140,10 +140,15 @@ function mApplyLayer(){
     /* 區域的路線說明已經移到下拉面板裡當副標,這裡就不再重複佔一行 */
     $("mNote").style.display="none";$("mNote").textContent="";return;
   }
-  var col=METRO[mCity].col[mLine];
+  var col=METRO[mCity].col[mLine],drawn=false;
   [].forEach.call(polys,function(e){
     var st=e.getAttribute("stroke");
-    e.classList.toggle("dim",!(st===col||st==="#0b1119"));});
+    if(st&&st.indexOf("var(")===0){e.classList.remove("dim");return;} /* 底下的描邊線不淡化 */
+    /* 優先用 data-line 精準比對;顏色比對會誤傷共用色碼的路線(近鉄各線、南海各線、阪急各線) */
+    var ln=e.getAttribute("data-line");
+    var hit=ln?(ln===mLine):(st===col);
+    if(hit)drawn=true;
+    e.classList.toggle("dim",!hit);});
   var on={};
   mST.forEach(function(s,i){if(s.l.indexOf(mLine)>=0)on[i]=1;});
   mST.forEach(function(s,i){
@@ -169,7 +174,8 @@ function mApplyLayer(){
     host.insertBefore(c,first);
   });
   $("mNote").style.display="block";
-  $("mNote").textContent=mLine+"・"+Object.keys(on).length+" 站・藍圈 = 可轉乘";
+  $("mNote").textContent=mLine+"・"+Object.keys(on).length+" 站・藍圈 = 可轉乘"+
+    (drawn?"":"(本圖只標示這條線的車站,未繪製路徑;路線規劃仍可使用)");
 }
 function mCodeHtml(cd,sm){return (cd||[]).map(function(c){
   return '<span class="mcode'+(sm?" sm":"")+'" style="background:'+c.c+'">'+

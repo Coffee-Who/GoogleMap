@@ -57,8 +57,13 @@ function mPassLineStatus(lineName){
   return ps.some(function(p){return ppLineCovered(p.kind,lineName);})?"ok":"off";
 }
 function mStationPassStatus(s){
-  var sts=s.l.map(mPassLineStatus);
-  return sts.indexOf("ok")>=0?"ok":"off";
+  var ps=myPassObjs().filter(function(p){return !p.singleTrip;});
+  if(!ps.length)return "ok";
+  var ok=s.l.some(function(l){
+    if(l===WALK_LINE)return true;
+    return ps.some(function(p){return ppLineCoveredAt(p.kind,l,s.n);});
+  });
+  return ok?"ok":"off";
 }
 function mPassSummaryName(){
   var ps=myPassObjs();
@@ -81,7 +86,10 @@ function mApplyPassOverlay(){
     if(mPassLineStatus(n)==="off"){
       var col=d.col[n];
       [].forEach.call(polys,function(e){
-        if(e.getAttribute("stroke")===col)e.classList.add("passOff");
+        /* 優先用 data-line 精準比對;沒有 data-line 的舊圖才退回顏色比對。
+           多條線共用同一色碼(近鉄各線、南海各線、阪急各線)時,顏色比對會誤傷。*/
+        var ln=e.getAttribute("data-line");
+        if(ln?(ln===n):(e.getAttribute("stroke")===col))e.classList.add("passOff");
       });
     }
   });
@@ -252,7 +260,34 @@ var PASS_CATALOG=[
   desc:"大阪地鐵、市巴士全線自由搭乘,加上大阪市區內的阪急、阪神、京阪、近鐵、南海路段,還能免費進約40個景點設施。",
   kind:"osaka_amazing",note:"官網已改版為「Surutto Qrtto」數位票,舊版實體卡(藍色富士山圖案那款)已停售"}
 ];
-var PP_OSAKA_METRO_LINES=["御堂筋線","中央線","堺筋線","谷町線","四つ橋線","千日前線","長堀鶴見緑地線"];
+var PP_OSAKA_METRO_LINES=["御堂筋線","中央線","堺筋線","谷町線","四つ橋線","千日前線",
+  "長堀鶴見緑地線","今里筋線","南港ポートタウン線"];
+/* 同一個實體車站在圖上被拆成多個節點的群組,票券範圍要整組一起算 */
+var PP_G_UMEDA=["梅田","東梅田","西梅田","大阪","阪急大阪梅田","阪神大阪梅田"];
+var PP_G_NAMBA=["なんば","大阪難波","南海難波","JR難波"];
+var PP_G_SHIN_IMAMIYA=["新今宮","動物園前"];
+var PP_G_TENNOJI=["天王寺","大阪阿部野橋"];
+/* ---- 票券的「部分路段」範圍 ----
+   有些票券只涵蓋一條線的其中一段(例如 Osaka Amazing Pass 的私鐵只到大阪市界)。
+   這裡列出該票券在那條線上「可以搭到的車站」,沒列在表上的路線代表整條都算涵蓋。 */
+var PASS_STATION_SCOPE={
+  osaka_amazing:{
+    /* 阪急:大阪梅田~十三~南方(市內),豊中、神戸三宮不含 */
+    "阪急電鐵":   PP_G_UMEDA.concat(["十三"]),
+    "阪急神戸線": PP_G_UMEDA.concat(["十三"]),
+    "阪急京都線": PP_G_UMEDA.concat(["十三","南方"]),
+    /* 阪神:大阪梅田~野田阪神(市內),尼崎不含 */
+    "阪神電車":     PP_G_UMEDA.concat(["福島","野田阪神"]),
+    "阪神なんば線": PP_G_NAMBA.concat(["桜川","ドーム前千代崎","九条","西九条"]),
+    /* 京阪:淀屋橋~京橋(市內) */
+    "京阪本線": ["淀屋橋","北浜","天満橋","京橋"],
+    /* 近鐵:大阪難波~鶴橋、大阪阿部野橋,生駒與藤井寺以遠不含 */
+    "近鉄奈良線":   PP_G_NAMBA.concat(["日本橋","大阪上本町","鶴橋"]),
+    "近鉄南大阪線": PP_G_TENNOJI.slice(),
+    /* 南海:難波~天下茶屋(市內),堺以南與關西機場不含;Rapi:t 需另購特急券 */
+    "南海空港線": PP_G_NAMBA.concat(PP_G_SHIN_IMAMIYA).concat(["天下茶屋"])
+  }
+};
 var PASS_AREA_KEYWORDS={
   jr_kansai_1:["Osaka","Kyoto","Kobe","Himeji","Nara","Otsu"],
   jr_kansai_2:["Osaka","Kyoto","Kobe","Himeji","Nara","Otsu"],
@@ -275,6 +310,8 @@ var PASS_AREA_KEYWORDS={
   osaka_amazing:["Osaka"]
 };
 function ppLineCovered(passKind,lineName){
+  /* 南海ラピート是全車指定席特急,所有周遊券都得另外買特急券,一律不算涵蓋 */
+  if(lineName==="南海Rapi:t")return false;
   var isJR=lineName.indexOf("JR")===0;
   var isKintetsu=lineName.indexOf("近鉄")===0;
   switch(passKind){
@@ -289,10 +326,26 @@ function ppLineCovered(passKind,lineName){
       if(lineName==="嵐電(京福電鐵)")return false;
       return true;
     case "osaka_amazing":
-      return PP_OSAKA_METRO_LINES.indexOf(lineName)>=0||
-        lineName.indexOf("阪急")>=0||lineName.indexOf("阪神")>=0||lineName.indexOf("南海")>=0;
+      return PP_OSAKA_METRO_LINES.indexOf(lineName)>=0||lineName==="京阪本線"||
+        lineName.indexOf("阪急")>=0||lineName.indexOf("阪神")>=0||
+        lineName.indexOf("南海")>=0||isKintetsu;
   }
   return false;
+}
+/* 這張票券在「這條線的這一站」是否可用(線層級 + 車站層級雙重判斷) */
+function ppLineCoveredAt(passKind,lineName,stationName){
+  if(!ppLineCovered(passKind,lineName))return false;
+  var sc=PASS_STATION_SCOPE[passKind];
+  if(!sc||!sc[lineName])return true;          /* 沒特別限制 = 整條線都算 */
+  return sc[lineName].indexOf(stationName)>=0;
+}
+/* 一段(a→b,搭 line)是否在手上票券的範圍內 */
+function rpEdgeAllowed(kinds,line,a,b){
+  if(!kinds)return true;                      /* 沒選票券 = 不限制 */
+  if(line===WALK_LINE)return true;            /* 走路不需要票券 */
+  return kinds.some(function(k){
+    return ppLineCoveredAt(k,line,a)&&ppLineCoveredAt(k,line,b);
+  });
 }
 function ppOpen(){
   ppRender();
@@ -467,7 +520,7 @@ var LANDMARK_ALIAS={
   "清水寺":"清水五条","金閣寺":"北野白梅町","銀閣寺":"出町柳","銀閣寺道":"出町柳",
   "伏見稻荷":"伏見稲荷","伏見稲荷大社":"伏見稲荷","嵯峨野":"嵯峨嵐山","嵐山竹林":"嵐山",
   "環球影城":"ユニバーサルシティ","大阪環球影城":"ユニバーサルシティ","USJ":"ユニバーサルシティ",
-  "大阪城":"大阪城公園","道頓堀":"なんば","心齋橋":"心斎橋","南海難波":"なんば",
+  "大阪城":"大阪城公園","道頓堀":"なんば","心齋橋":"心斎橋",
   "奈良公園":"近鉄奈良","東大寺":"近鉄奈良","春日大社":"近鉄奈良",
   "貴船神社":"貴船口","鞍馬寺":"鞍馬","平等院":"宇治","姬路城":"姫路",
   "有馬溫泉":"三宮","北野異人館":"三宮","高野山":"近鉄奈良"
@@ -593,7 +646,7 @@ async function ppRecommend(){
         var hitLine=null,hitStation=null;
         for(var hi=0;hi<r.hits.length;hi++){
           var s2=r.hits[hi];
-          var l2=s2.l.filter(function(l){return ppLineCovered(p.kind,l);})[0];
+          var l2=s2.l.filter(function(l){return ppLineCoveredAt(p.kind,l,s2.n);})[0];
           if(l2){hitLine=l2;hitStation=s2;break;}
         }
         if(hitLine){
@@ -611,7 +664,7 @@ async function ppRecommend(){
           unmatched.push({place:r.place,note:noCoverNote});
         }
       }else if(r.kind==="near"){
-        var line=r.lines.filter(function(l){return ppLineCovered(p.kind,l);})[0];
+        var line=r.lines.filter(function(l){return ppLineCoveredAt(p.kind,l,r.stationName);})[0];
         if(line){
           matched.push({place:r.place,reason:"離「"+r.stationName+"」站約 "+distTxt(r.dist)+
             ",這站在「"+line+"」,這張票券有涵蓋這條路線"});
@@ -794,30 +847,94 @@ function rpFindCommonCity(fromTxt,toTxt){
   }
   return null;
 }
-function rpBFS(city,fromName,toName,allowedLines){
+/* 每多坐一站算 1,換乘一次額外加 RP_TRANSFER_COST,走路轉乘再加 RP_WALK_COST。
+   純 BFS 只求「站數最少」,常會挑出換 4 次車的怪路線,所以改成最小成本搜尋。 */
+var RP_TRANSFER_COST=3;
+var RP_WALK_COST=2;
+var RP_MAX_HOP=15;
+/* 需要另外購買特急券的路線,同樣距離下規劃器優先避開 */
+var RP_SURCHARGE_LINES=["南海Rapi:t"];
+/* 同一張圖裡混了「逐站」與「示意直達」兩種 link(例如京都圖上「京都↔大阪梅田」只有一段),
+   如果每段都算 1,規劃器會覺得繞去大阪再回嵐山很划算。改成用實際距離估段成本。 */
+function rpKm(a,b){
+  if(!a||!b||a.lat==null||a.lng==null||b.lat==null||b.lng==null)return null;
+  var R=6371,rad=Math.PI/180;
+  var dLa=(b.lat-a.lat)*rad, dLo=(b.lng-a.lng)*rad;
+  var h=Math.sin(dLa/2)*Math.sin(dLa/2)+
+        Math.cos(a.lat*rad)*Math.cos(b.lat*rad)*Math.sin(dLo/2)*Math.sin(dLo/2);
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));
+}
+var rpPosCache={};
+function rpPos(city){
+  if(rpPosCache[city])return rpPosCache[city];
+  var m={};
+  ((METRO[city]||{}).st||[]).forEach(function(s){if(m[s.n]===undefined)m[s.n]=s;});
+  rpPosCache[city]=m;
+  return m;
+}
+function rpHopCost(pos,a,b){
+  var km=rpKm(pos[a],pos[b]);
+  if(km===null)return 1;
+  return Math.min(RP_MAX_HOP,1+km/2);
+}
+function rpHeapPush(h,x){
+  h.push(x);
+  var i=h.length-1;
+  while(i>0){var pi=(i-1)>>1; if(h[pi].cost<=h[i].cost)break; var t=h[pi];h[pi]=h[i];h[i]=t; i=pi;}
+}
+function rpHeapPop(h){
+  var top=h[0],last=h.pop();
+  if(h.length){
+    h[0]=last;var i=0;
+    for(;;){var l=2*i+1,r=l+1,m=i;
+      if(l<h.length&&h[l].cost<h[m].cost)m=l;
+      if(r<h.length&&h[r].cost<h[m].cost)m=r;
+      if(m===i)break; var t=h[m];h[m]=h[i];h[i]=t; i=m;}
+  }
+  return top;
+}
+function rpBFS(city,fromName,toName,allowedLines,passKinds){
   var adj=rpBuildGraph(city);
   if(!adj[fromName]||!adj[toName])return null;
-  var queue=[fromName], visited={};
-  visited[fromName]={prev:null,line:null};
-  while(queue.length){
-    var cur=queue.shift();
-    if(cur===toName)break;
-    (adj[cur]||[]).forEach(function(e){
-      if(visited[e.to])return;
-      if(allowedLines&&allowedLines.indexOf(e.line)<0)return;
-      visited[e.to]={prev:cur,line:e.line};
-      queue.push(e.to);
-    });
+  var pos=rpPos(city);
+  var SEP="\u0000";
+  var startKey=fromName+SEP;
+  var node={},dist={},heap=[];
+  node[startKey]={station:fromName,line:null,prevKey:null};
+  dist[startKey]=0;
+  rpHeapPush(heap,{key:startKey,cost:0});
+  var goalKey=null;
+  while(heap.length){
+    var cur=rpHeapPop(heap);
+    if(cur.cost>dist[cur.key])continue;
+    var n=node[cur.key];
+    if(n.station===toName){goalKey=cur.key;break;}
+    var edges=adj[n.station]||[];
+    for(var i=0;i<edges.length;i++){
+      var e=edges[i];
+      if(allowedLines&&allowedLines.indexOf(e.line)<0)continue;
+      if(!rpEdgeAllowed(passKinds,e.line,n.station,e.to))continue;
+      var step=(e.line===WALK_LINE)?RP_WALK_COST:rpHopCost(pos,n.station,e.to);
+      if(n.line!==null&&n.line!==e.line)step+=RP_TRANSFER_COST;
+      if(RP_SURCHARGE_LINES.indexOf(e.line)>=0)step+=2;
+      var k=e.to+SEP+e.line, nc=cur.cost+step;
+      if(dist[k]===undefined||nc<dist[k]){
+        dist[k]=nc;
+        node[k]={station:e.to,line:e.line,prevKey:cur.key};
+        rpHeapPush(heap,{key:k,cost:nc});
+      }
+    }
   }
-  if(!visited[toName])return null;
-  var path=[],cur=toName;
-  while(cur){
-    path.unshift({station:cur,lineFromPrev:visited[cur].line});
-    cur=visited[cur].prev;
-  }
+  if(goalKey===null)return null;
+  var path=[],k2=goalKey;
+  while(k2!==null){var nn=node[k2];path.unshift({station:nn.station,lineFromPrev:nn.line});k2=nn.prevKey;}
   return path;
 }
 var WALK_LINE="徒步轉乘";
+function rpPassKinds(){
+  var ps=myPassObjs().filter(function(p){return !p.singleTrip;});
+  return ps.length?ps.map(function(p){return p.kind;}):null;
+}
 function rpAllowedLines(){
   var ps=myPassObjs().filter(function(p){return !p.singleTrip;});
   if(!ps.length)return null;                    /* 沒選票券 = 不限制 */
@@ -838,14 +955,19 @@ function rpPlanRoute(fromTxt,toTxt){
     }
     if(found.city!==mCity)mLoad(found.city);
     var allowed=rpAllowedLines();
-    var path=rpBFS(found.city,found.from,found.to,allowed);
-    var full=allowed?rpBFS(found.city,found.from,found.to,null):path;
+    var kinds=rpPassKinds();
+    var path=rpBFS(found.city,found.from,found.to,allowed,kinds);
+    var full=(allowed||kinds)?rpBFS(found.city,found.from,found.to,null,null):path;
     rpClearPathOnMap();
     if(path){
       rpRenderPathResult(path,true,null);
       rpDrawPathOnMap(found.city,path);
     }else if(full){
-      var blockIdx=full.findIndex(function(step,i){return i>0&&allowed.indexOf(step.lineFromPrev)<0;});
+      var blockIdx=full.findIndex(function(step,i){
+        if(i===0)return false;
+        if(allowed&&allowed.indexOf(step.lineFromPrev)<0)return true;
+        return !rpEdgeAllowed(kinds,step.lineFromPrev,full[i-1].station,step.station);
+      });
       rpRenderPathResult(full,false,blockIdx);
       rpDrawPathOnMap(found.city,full,blockIdx);
     }else{
@@ -906,9 +1028,11 @@ function rpRenderPathResult(path,ok,blockIdx){
     var fromS=path[0].station,toS=path[path.length-1].station;
     var fromHits=[{n:fromS,l:[path[Math.min(blockIdx,path.length-1)].lineFromPrev].filter(Boolean)}];
     var alt=PASS_CATALOG.filter(function(p){return !p.excludeFromReco;}).map(function(p){
-      var lines=path.slice(1).map(function(s){return s.lineFromPrev;});
-      var coversAll=lines.every(function(l){return ppLineCovered(p.kind,l);});
-      var coversN=lines.filter(function(l){return ppLineCovered(p.kind,l);}).length;
+      var segs=path.slice(1).map(function(s,si){
+        return {line:s.lineFromPrev,a:path[si].station,b:s.station};});
+      var okSeg=function(x){return rpEdgeAllowed([p.kind],x.line,x.a,x.b);};
+      var coversAll=segs.every(okSeg);
+      var coversN=segs.filter(okSeg).length;
       return {pass:p,coversAll:coversAll,score:coversN};
     }).filter(function(x){return x.score>0;}).sort(function(a,b){return (b.coversAll-a.coversAll)||(b.score-a.score);}).slice(0,3);
     if(alt.length){

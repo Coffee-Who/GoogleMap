@@ -1,24 +1,26 @@
 "use strict";
-/* ================= 關西機場交通(捷運圖第 4 個分頁) =================
-   資料來源:massi.tw〈關西機場交通攻略〉+ 各業者官方頁
+/* ================= 關西機場交通(區域下拉的第 4 個選項) =================
+   資料:massi.tw〈關西機場交通攻略〉+ 各業者官方頁
    路線圖:assets/kix-route-map.jpg(圖片作者:馬摩)
-   線色比照路線圖圖示說明
+   線色比照路線圖的「圖示說明」
+   本檔不需要修改 metro-map.js,靠包裝 mRenderCityPick / mLoad 掛進去
+   載入順序必須在 js/metro-map.js 之後
 ------------------------------------------------------------------ */
 
-var KIX_IMG   = "assets/kix-route-map.jpg";
-var KIX_CREDIT= "https://massi.tw/kansai-airport-transportation/";
+var KIX_IMG    = "assets/kix-route-map.jpg";
+var KIX_CREDIT = "https://massi.tw/kansai-airport-transportation/";
 
 /* 圖示說明配色 */
 var KIX_COL = {
-  nankaiMain : "#009944",  /* 南海本線 綠 */
-  nankaiLtd  : "#0068B7",  /* 南海特急 藍 */
-  haruka     : "#E60012",  /* HARUKA  紅 */
-  kanku      : "#E60012",  /* 關空快速 紅白雙線(hollow) */
-  bus        : "var(--text)", /* 機場巴士 黑(淺色主題為黑,深色主題自動轉白) */
-  ferry      : "#14539E"   /* 高速船 藍 */
+  nankaiMain : "#009944",     /* 南海本線 綠 */
+  nankaiLtd  : "#0068B7",     /* 南海特急 藍 */
+  haruka     : "#E60012",     /* HARUKA  紅 */
+  kanku      : "#E60012",     /* 關空快速 紅白雙線 */
+  bus        : "var(--text)", /* 機場巴士 黑(深色主題自動轉白) */
+  ferry      : "#14539E"      /* 高速船 藍 */
 };
 
-/* grp:篩選分類 / hollow:紅白雙線 / mins:站名與最快特急班次車程(分) */
+/* grp:篩選分類 / hollow:紅白雙線 / mins:[站名, 最快特急班次車程(分)] */
 var KIX_ROUTES = [
  {
   id:"rapit", grp:"南海", name:"南海特急 Rapi:t", col:KIX_COL.nankaiLtd,
@@ -56,7 +58,7 @@ var KIX_ROUTES = [
   id:"bus", grp:"巴士", name:"利木津機場巴士", col:KIX_COL.bus,
   badge:"親子・長輩", fare:null, fareNote:"票價依路線請查官方頁",
   head:"保證有位・第 2 航廈直接上車",
-  mins:[["神戶三宮",65],["環球影城 USJ",70],["JR 奈良",100],["京都",null]],
+  mins:[["神戶三宮",65],["環球影城",70],["JR 奈良",100],["京都",null]],
   desc:"三種情況特別推薦搭巴士:一是親子或長輩同行,保證有座位、不用扛行李上下月台;二是飛第 2 航廈的晚班機,不必趕接駁車去 1 航廈;三是第一天直衝環球影城、姬路、神戶、奈良這類較遠地區,省掉轉乘的時間與體力。",
   note:"往京都末班車:23:07(第 2 航廈)、23:20(第 1 航廈)",
   url:"https://www.kate.co.jp/tw/"
@@ -83,42 +85,63 @@ var KIX_FAQ = [
   a:"住大阪、梅田:搭機場巴士(凌晨 5 點左右就有車,且先停靠 2 航廈)。住難波附近:搭南海電鐵(最早 05:13 難波出發、06:16 抵達)。京都或其他地區:前一晚改住臨空城站附近,前一天行程直接排臨空城 Outlet,隔天搭一站電車過海就到機場。"}
 ];
 
-/* ================= 分頁切換 ================= */
-var kixOn=false, kixFilter="全部", kixOpen={rapit:1,haruka:1};
+/* ================= 狀態 ================= */
+var kixOn=false, kixFilter="全部", kixOpen={rapit:1,haruka:1}, kixBuilt=false;
 
-function kixInit(){
-  var wrap=$("mCities");
-  if(!wrap||$("kixTab"))return;
+/* ================= 掛進區域下拉 ================= */
+function kixAppendCityOption(){
+  var list=$("mddCityList"); if(!list)return;
+  if(kixOn){
+    list.querySelectorAll(".dd-opt").forEach(function(b){
+      b.classList.remove("on");
+      var ck=b.querySelector(".ck");
+      if(ck&&ck.parentNode)ck.parentNode.removeChild(ck);
+    });
+  }
+  var sep=document.createElement("div");
+  sep.className="kix-dd-sep";
+  list.appendChild(sep);
+
   var b=document.createElement("button");
-  b.id="kixTab"; b.type="button"; b.innerHTML="&#9992; 關西機場";
-  b.onclick=kixShow;
-  wrap.appendChild(b);
-
-  var host=document.getElementById("kixPage");
-  if(host)host.innerHTML=kixRender();
-  kixBind();
+  b.type="button";
+  b.className="dd-opt"+(kixOn?" on":"");
+  b.setAttribute("data-kix","1");
+  b.innerHTML='<span class="nm">關西機場交通'+
+    '<span class="sub">南海・JR・利木津巴士・高速船比較</span></span>'+
+    (kixOn?'<span class="ck">✓</span>':'');
+  b.onclick=function(){mClosePick();kixShow();};
+  list.appendChild(b);
 }
 
 function kixShow(){
-  if(document.body.classList.contains("mFsOn"))$("mFs").click();
-  if(typeof mPickOn!=="undefined"&&mPickOn)$("mPickMode").click();
+  if(document.body.classList.contains("mFsOn")){var fb=$("mFs");if(fb)fb.click();}
   kixOn=true;
   document.body.classList.add("kixOn");
-  $("mCities").querySelectorAll("button").forEach(function(x){x.classList.remove("on");});
-  $("kixTab").classList.add("on");
-  var p=$("kixPage"); if(p)p.scrollTop=0;
+  if($("mCityLb"))$("mCityLb").textContent="關西機場交通";
+  kixBuild();
+  kixRefreshPick();
+  window.scrollTo(0,0);
 }
 
 function kixHide(){
   if(!kixOn)return;
   kixOn=false;
   document.body.classList.remove("kixOn");
-  var t=$("kixTab"); if(t)t.classList.remove("on");
+}
+
+/* 重繪區域下拉,讓 ✓ 跟著目前選擇走 */
+var kixInPick=false;
+function kixRefreshPick(){
+  if(kixInPick)return;
+  kixInPick=true;
+  try{ if(typeof mRenderCityPick==="function")mRenderCityPick(); }
+  finally{ kixInPick=false; }
 }
 
 /* ================= 版面 ================= */
-function kixRender(){
-  return ''+
+function kixBuild(){
+  var host=$("kixPage"); if(!host||kixBuilt)return;
+  host.innerHTML=
   '<div class="kix-img" id="kixImgBtn">'+
     '<img src="'+KIX_IMG+'" alt="關西機場交通路線圖" loading="lazy">'+
     '<span class="kix-zoom">&#9974; 點擊放大</span>'+
@@ -143,13 +166,16 @@ function kixRender(){
   '<div class="kix-faq" id="kixFaq">'+
     KIX_FAQ.map(function(f,i){
       return '<div class="kix-fq" data-i="'+i+'">'+
-        '<div class="q"><span class="ar">&#9656;</span>'+esc(f.q)+'</div>'+
+        '<div class="q"><span class="ar">&#9656;</span><span>'+esc(f.q)+'</span></div>'+
         '<div class="a">'+esc(f.a)+'</div></div>';
     }).join("")+
   '</div>'+
 
   '<p class="kix-src">車程為最快特急班次的參考時間,票價與時刻請以各業者官方公告為準。'+
     '<a href="'+KIX_CREDIT+'" target="_blank" rel="noopener">資料來源:一直玩的馬摩</a></p>';
+
+  kixBuilt=true;
+  kixBind();
 }
 
 function kixCard(r){
@@ -198,30 +224,29 @@ function kixList(){
     };
   });
   box.querySelectorAll("[data-to]").forEach(function(b){
-    b.onclick=function(){kixToRoute(b.dataset.to);};
+    b.onclick=function(e){e.stopPropagation();kixToRoute(b.dataset.to);};
   });
   box.querySelectorAll("[data-plan]").forEach(function(b){
-    b.onclick=function(){kixToRoute(b.dataset.plan);};
+    b.onclick=function(e){e.stopPropagation();kixToRoute(b.dataset.plan);};
   });
 }
 
-/* 帶入路線規劃:起點固定關西機場 */
+/* 帶入路線規劃:起點固定關西機場,切回關西全域圖 */
 function kixToRoute(dest){
   var to=String(dest).replace(/\s*(USJ|Outlet)\s*/g,"").trim();
-  $("rpFrom").value="関西空港";
-  $("rpTo").value=to;
+  if($("rpFrom"))$("rpFrom").value="関西空港";
+  if($("rpTo"))$("rpTo").value=to;
   if(typeof rpFromPlace!=="undefined")rpFromPlace=null;
   if(typeof rpToPlace!=="undefined")rpToPlace=null;
-  kixHide();
   mLoad("關西全域");
-  if($("rpBody").style.display==="none"){
-    $("rpBody").style.display="block";
-    $("rpCaret").textContent="輸入起訖點,依票券規劃 ⌃";
+  var body=$("rpBody");
+  if(body&&body.style.display==="none"){
+    body.style.display="block";
+    if($("rpCaret"))$("rpCaret").textContent="輸入起訖點,依票券規劃 ⌃";
     if(typeof ensureGoogleMapsLoaded==="function")ensureGoogleMapsLoaded();
   }
-  if(typeof mPickSync==="function")mPickSync();
-  $("rpBody").scrollIntoView({behavior:"smooth",block:"center"});
-  toast("關西機場 → "+to);
+  if(body)body.scrollIntoView({behavior:"smooth",block:"center"});
+  if(typeof toast==="function")toast("關西機場 → "+to);
 }
 
 /* ================= 事件 ================= */
@@ -276,3 +301,22 @@ function kixImgOpen(){
   $("kixViewImg").style.width="100%";
   v.classList.add("on");
 }
+
+/* ================= 包裝既有函式(不必改 metro-map.js) ================= */
+(function(){
+  if(typeof window.mRenderCityPick==="function"){
+    var _rcp=window.mRenderCityPick;
+    window.mRenderCityPick=function(){
+      _rcp.apply(this,arguments);
+      kixAppendCityOption();
+    };
+  }
+  if(typeof window.mLoad==="function"){
+    var _ml=window.mLoad;
+    window.mLoad=function(){
+      kixHide();
+      _ml.apply(this,arguments);
+      kixRefreshPick();
+    };
+  }
+})();
